@@ -26,7 +26,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <nav
       id="bottom-navigation-bar"
-      className="sticky bottom-0 z-40 w-full bg-white/95 backdrop-blur-md border-t border-zinc-200/90 px-3 pt-1.5 pb-safe pb-3 shrink-0"
+      className="sticky bottom-0 z-40 w-full bg-white/95 backdrop-blur-md border-t border-zinc-200/90 px-3 pt-1.5 pb-safe pb-3 shrink-0 rounded-t-3xl shadow-lg"
     >
       <div className="flex items-center justify-around relative max-w-md mx-auto">
         {/* Home */}

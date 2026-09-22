@@ -16,6 +16,7 @@ import {
   Check,
   MapPin,
 } from 'lucide-react';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface AddItemModalProps {
   categories: Category[];
@@ -95,44 +96,27 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   }, []);
 
   const startCamera = async () => {
-    setCameraError(null);
-    setCameraActive(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
+      const image = await CapCamera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      if (image.dataUrl) {
+        setImages((prev) => [image.dataUrl as string, ...prev]);
       }
     } catch (err) {
-      setCameraError('Unable to open camera. You can upload an image from files instead.');
-      setCameraActive(false);
+      console.error('Camera error', err);
     }
   };
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setCameraActive(false);
+    // No-op for Capacitor Camera as it handles its own UI
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 640;
-    canvas.height = videoRef.current.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      setImages((prev) => [dataUrl, ...prev]);
-    }
-    stopCamera();
+    // Handled by Capacitor Camera directly
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,28 +263,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               className="hidden"
             />
 
-            {/* Live Camera Viewfinder if active */}
-            {cameraActive && (
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-video mb-3">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-4">
-                  <button
-                    type="button"
-                    onClick={capturePhoto}
-                    className="w-14 h-14 rounded-full bg-white border-4 border-orange-500 shadow-md flex items-center justify-center active:scale-95"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-orange-500" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={stopCamera}
-                    className="px-3 py-1.5 bg-black/80 text-white rounded-xl text-xs font-bold"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Removed HTML5 Camera Viewfinder */}
 
             {cameraError && (
               <p className="text-xs text-rose-500 font-semibold mb-2">{cameraError}</p>

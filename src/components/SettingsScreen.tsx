@@ -82,207 +82,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <p className="text-xs text-zinc-500 font-medium">Statistics, appearance & local data management</p>
       </div>
 
-      {/* Theme & Customization Card */}
-      <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-              <Palette className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-extrabold text-zinc-900">Appearance & Theme</h3>
-              <p className="text-[11px] text-zinc-500 font-medium">Select your vault accent color</p>
-            </div>
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200/50">
-            Active
-          </span>
-        </div>
-
-        {/* Accent Color Palette Swatches */}
-        <div>
-          <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-2.5">
-            Accent Color
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {COLOR_OPTIONS.map((c) => {
-              const isSelected = (theme?.accent || DEFAULT_THEME.accent) === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => {
-                    haptic.selection();
-                    onUpdateTheme?.({
-                      accent: c.id,
-                      radius: 'compact',
-                    });
-                  }}
-                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
-                    isSelected
-                      ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
-                      : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800'
-                  }`}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center ring-2 ring-white/40 shadow-xs"
-                    style={{ backgroundColor: c.hex }}
-                  >
-                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold block truncate leading-tight">{c.name}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* APK & App Installation Card */}
-      <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-              <Smartphone className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-extrabold text-zinc-900">Install App & APK Packaging</h3>
-              <p className="text-[11px] text-zinc-500 font-medium">Standalone installation & cloud APK conversion</p>
-            </div>
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-            APK Ready
-          </span>
-        </div>
-
-        {/* PWA & Service Worker Status Banner */}
-        <div className="p-3 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-start gap-3">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-3.5 h-3.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold text-zinc-900">Offline PWA Configured</h4>
-            <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">
-              Manifest, 192px/512px maskable icons, and service worker cache are all active. This app meets 100% of Google & Microsoft APK packaging requirements.
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons: 1-Tap Install & Copy URL */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {pwa.isInstalled ? (
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2 text-xs font-bold">
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span>Running as Installed App</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={async () => {
-                haptic.medium();
-                if (pwa.isInstallable) {
-                  await pwa.installApp();
-                } else {
-                  alert('To install on Android: Open in Chrome, tap the top-right ⋮ menu, then tap "Install app" or "Add to Home screen".');
-                }
-              }}
-              className="p-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-xs active:scale-98"
-            >
-              <Smartphone className="w-4 h-4" />
-              <span>Install to Home Screen</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              haptic.light();
-              const currentUrl = window.location.origin;
-              navigator.clipboard?.writeText(currentUrl);
-              setCopiedUrl(true);
-              setTimeout(() => setCopiedUrl(false), 2500);
-            }}
-            className="p-3 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800 font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-98"
-          >
-            {copiedUrl ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-700">App URL Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-zinc-500" />
-                <span>Copy App URL for APK Tools</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Cloud APK Packaging Services */}
-        <div className="space-y-2 pt-1">
-          <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block">
-            Top Cloud APK Converters (No Android Studio)
-          </label>
-          <div className="grid grid-cols-1 gap-2">
-            <a
-              href="https://www.pwabuilder.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-2xl border border-zinc-200 hover:border-indigo-400 bg-zinc-50/70 hover:bg-indigo-50/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600">PWABuilder.com</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700">Recommended</span>
-                </div>
-                <p className="text-[11px] text-zinc-500 mt-0.5">By Microsoft. Generates signed Android APK and Google Play AAB.</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-indigo-600 shrink-0" />
-            </a>
-
-            <a
-              href="https://www.webintoapp.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-2xl border border-zinc-200 hover:border-indigo-400 bg-zinc-50/70 hover:bg-indigo-50/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600">WebIntoApp.com</span>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Instant free APK generation in 2 clicks with custom splash and icon.</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-indigo-600 shrink-0" />
-            </a>
-
-            <a
-              href="https://www.appsgeyser.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-2xl border border-zinc-200 hover:border-indigo-400 bg-zinc-50/70 hover:bg-indigo-50/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600">AppsGeyser.com</span>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Simple web-to-apk converter with offline storage support.</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-indigo-600 shrink-0" />
-            </a>
-
-            <a
-              href="https://median.co"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-2xl border border-zinc-200 hover:border-indigo-400 bg-zinc-50/70 hover:bg-indigo-50/40 transition-all flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-xs font-bold text-zinc-900 group-hover:text-indigo-600">Median.co (GoNative)</span>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Enterprise-grade native Android wrapper with instant online APK build.</p>
-              </div>
-              <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-indigo-600 shrink-0" />
-            </a>
-          </div>
-        </div>
-      </div>
 
       {/* Basic Collection Statistics Card */}
       <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
@@ -408,6 +207,64 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Theme & Customization Card */}
+      <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+              <Palette className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-zinc-900">Appearance & Theme</h3>
+              <p className="text-[11px] text-zinc-500 font-medium">Select your vault accent color</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200/50">
+            Active
+          </span>
+        </div>
+
+        {/* Accent Color Palette Swatches */}
+        <div>
+          <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-2.5">
+            Accent Color
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {COLOR_OPTIONS.map((c) => {
+              const isSelected = (theme?.accent || DEFAULT_THEME.accent) === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    haptic.selection();
+                    onUpdateTheme?.({
+                      accent: c.id,
+                      radius: 'compact',
+                    });
+                  }}
+                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                    isSelected
+                      ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
+                      : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800'
+                  }`}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center ring-2 ring-white/40 shadow-xs"
+                    style={{ backgroundColor: c.hex }}
+                  >
+                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold block truncate leading-tight">{c.name}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -547,34 +404,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </div>
 
-      {/* Offline Privacy Badge */}
-      <div className="bg-zinc-50 border border-zinc-200/90 rounded-2xl p-3.5 flex items-start gap-3">
-        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/70 flex items-center justify-center shrink-0 mt-0.5">
-          <ShieldCheck className="w-4 h-4 stroke-[2.5]" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h4 className="text-xs font-bold text-zinc-900">Local & Private Storage</h4>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Active on device" />
-          </div>
-          <p className="text-[11px] text-zinc-500 font-medium leading-relaxed mt-0.5">
-            Zero cloud servers or external trackers. All records, tags, and photos remain exclusively on this device.
-          </p>
-        </div>
-      </div>
-
-      {/* App Branding & Mascot Footer */}
-      <div className="text-center pt-2 pb-5 space-y-1">
-        <div className="inline-flex p-2 rounded-2xl bg-zinc-50 border border-zinc-200/60 mb-0.5">
-          <VaultyMascot size={36} />
-        </div>
-        <h4 className="text-xs font-bold text-zinc-800 tracking-tight">MyVault</h4>
-        <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-400 font-medium">
-          <span>v1.0.0</span>
-          <span>•</span>
-          <span>Offline Digital Cabinet</span>
-        </div>
-      </div>
 
       {/* Add Custom Category Modal */}
       {showAddCatModal && (

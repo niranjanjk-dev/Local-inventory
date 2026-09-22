@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "MyVault - Personal Collection & Inventory",
-  "short_name": "MyVault",
+  "name": "Involoc - Personal Collection & Inventory",
+  "short_name": "Involoc",
   "description": "Personal offline inventory and collection catalog with photo gallery, location tracking, and stock counters.",
   "start_url": "/",
   "scope": "/",

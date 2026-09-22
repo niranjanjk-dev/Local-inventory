@@ -26,35 +26,35 @@
   --accent-border: #C7D2FE;
   --accent-ring: rgba(79, 70, 229, 0.25);
 
-  --radius-modal: 12px;
-  --radius-card: 10px;
-  --radius-btn: 8px;
-  --radius-input: 8px;
-  --radius-pill: 8px;
+  --radius-modal: 24px;
+  --radius-card: 20px;
+  --radius-btn: 16px;
+  --radius-input: 16px;
+  --radius-pill: 16px;
 }
 
 [data-radius="sharp"] {
-  --radius-modal: 8px;
-  --radius-card: 6px;
-  --radius-btn: 4px;
-  --radius-input: 4px;
-  --radius-pill: 6px;
-}
-
-[data-radius="compact"] {
   --radius-modal: 12px;
   --radius-card: 10px;
   --radius-btn: 8px;
   --radius-input: 8px;
-  --radius-pill: 8px;
+  --radius-pill: 10px;
+}
+
+[data-radius="compact"] {
+  --radius-modal: 24px;
+  --radius-card: 20px;
+  --radius-btn: 16px;
+  --radius-input: 16px;
+  --radius-pill: 16px;
 }
 
 [data-radius="subtle"] {
-  --radius-modal: 16px;
-  --radius-card: 14px;
-  --radius-btn: 10px;
-  --radius-input: 10px;
-  --radius-pill: 12px;
+  --radius-modal: 32px;
+  --radius-card: 28px;
+  --radius-btn: 20px;
+  --radius-input: 20px;
+  --radius-pill: 24px;
 }
 
 /* Accent Themes */
