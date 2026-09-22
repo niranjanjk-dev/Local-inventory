@@ -1,0 +1,5 @@
+{
+  "name": "MyVault",
+  "description": "Personal offline Android collection and inventory app with a playful design, image-first catalog, storage locations, stock tracking, and local backup.",
+  "requestFramePermissions": ["camera"]
+}

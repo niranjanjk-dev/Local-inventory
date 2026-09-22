@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="vaultGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4338CA" />
+    </linearGradient>
+    <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E0E7FF" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#1E1B4B" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded rectangle for standard icon -->
+  <rect x="24" y="24" width="464" height="464" rx="100" fill="url(#vaultGrad)" filter="url(#shadow)" />
+  
+  <!-- Subtle inner border highlight -->
+  <rect x="24" y="24" width="464" height="464" rx="100" fill="none" stroke="#A5B4FC" stroke-width="4" stroke-opacity="0.3" />
+
+  <!-- Vault Body Plate -->
+  <rect x="100" y="100" width="312" height="312" rx="48" fill="#312E81" fill-opacity="0.4" stroke="#818CF8" stroke-width="6" stroke-opacity="0.6" />
+
+  <!-- Vault Door Dial Outer Ring -->
+  <circle cx="256" cy="256" r="92" fill="url(#dialGrad)" />
+  
+  <!-- Dial Inner Ring -->
+  <circle cx="256" cy="256" r="74" fill="#4F46E5" />
+  
+  <!-- Dial Center Pin -->
+  <circle cx="256" cy="256" r="32" fill="#FFFFFF" />
+  <circle cx="256" cy="256" r="14" fill="#3730A3" />
+
+  <!-- Dial Ticks -->
+  <line x1="256" y1="188" x2="256" y2="198" stroke="#EEF2FF" stroke-width="6" stroke-linecap="round" />
+  <line x1="256" y1="314" x2="256" y2="324" stroke="#EEF2FF" stroke-width="6" stroke-linecap="round" />
+  <line x1="188" y1="256" x2="198" y2="256" stroke="#EEF2FF" stroke-width="6" stroke-linecap="round" />
+  <line x1="314" y1="256" x2="324" y2="256" stroke="#EEF2FF" stroke-width="6" stroke-linecap="round" />
+
+  <!-- 4 Corner Bolted Rivets -->
+  <circle cx="132" cy="132" r="12" fill="#A5B4FC" fill-opacity="0.7" />
+  <circle cx="380" cy="132" r="12" fill="#A5B4FC" fill-opacity="0.7" />
+  <circle cx="132" cy="380" r="12" fill="#A5B4FC" fill-opacity="0.7" />
+  <circle cx="380" cy="380" r="12" fill="#A5B4FC" fill-opacity="0.7" />
+</svg>
