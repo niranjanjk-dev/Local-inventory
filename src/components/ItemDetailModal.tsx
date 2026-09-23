@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { VaultItem, Category } from '../types';
 import { CategoryIcon } from './CategoryIcon';
+import { getPhotoUrl } from '../utils/fileSystem';
 import { haptic } from '../utils/haptics';
 import {
   ArrowLeft,
@@ -45,14 +46,12 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
-  const [dragProgress, setDragProgress] = useState<number>(0);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   // When active item changes, reset active image index and state
   useEffect(() => {
     setActiveImageIndex(0);
     setShowDeleteConfirm(false);
-    setDragProgress(0);
   }, [item.id]);
 
   const cat = categories.find((c) => c.id === item.categoryId);
@@ -90,24 +89,16 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchStartRef.current) return;
-    const dx = e.touches[0].clientX - touchStartRef.current.x;
-    const dy = e.touches[0].clientY - touchStartRef.current.y;
-    // Only track if mostly horizontal to avoid interfering with vertical scroll
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      setDragProgress(dx);
-    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStartRef.current) {
-      setDragProgress(0);
       return;
     }
     const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
     const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
     const dt = Date.now() - touchStartRef.current.time;
     touchStartRef.current = null;
-    setDragProgress(0);
 
     // Must be predominantly horizontal
     if (Math.abs(dx) > Math.abs(dy) * 1.15) {
@@ -180,20 +171,6 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Dynamic Drag Direction Feedback Banner */}
-        {dragProgress < -25 && hasNext && (
-          <div className="absolute top-16 right-4 z-40 bg-zinc-900 text-white text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 pointer-events-none animate-pulse">
-            <span>Next: {allItems[currentIndex + 1]?.name}</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </div>
-        )}
-        {dragProgress > 25 && hasPrev && (
-          <div className="absolute top-16 left-4 z-40 bg-zinc-900 text-white text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 pointer-events-none animate-pulse">
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span>Prev: {allItems[currentIndex - 1]?.name}</span>
-          </div>
-        )}
-
         {/* Navigation Bar */}
         <div className="px-5 py-3.5 border-b border-zinc-100 flex items-center justify-between shrink-0 bg-white z-20">
           <button
@@ -234,7 +211,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <span className="hidden xs:inline-block text-[9px] font-black uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200/50">
+              <span className="hidden xs:inline-block text-[9px] font-black uppercase tracking-wider text-black bg-zinc-100 px-2 py-0.5 rounded-full border border-zinc-200/50">
                 Swipe ↔
               </span>
             </div>
@@ -259,7 +236,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                 haptic.warning();
                 setShowDeleteConfirm(true);
               }}
-              className="p-2 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+              className="p-2 rounded-full bg-zinc-50 hover:bg-zinc-100 text-black transition-colors"
               title="Delete Item"
             >
               <Trash2 className="w-4 h-4" />
@@ -287,12 +264,12 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             <div className="p-5 space-y-5 flex-1">
               {/* Delete Confirmation Box */}
               {showDeleteConfirm && (
-                <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-rose-700">
+                <div className="bg-zinc-50 border-2 border-zinc-300 rounded-3xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-black">
                     <AlertTriangle className="w-5 h-5 shrink-0" />
                     <h4 className="text-sm font-extrabold">Remove this item from your Vault?</h4>
                   </div>
-                  <p className="text-xs text-rose-600">
+                  <p className="text-xs text-black">
                     "{item.name}" will be permanently deleted from your local storage.
                   </p>
                   <div className="flex justify-end gap-2">
@@ -312,7 +289,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                         haptic.heavy();
                         onDelete(item);
                       }}
-                      className="px-3.5 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700"
+                      className="px-3.5 py-1.5 bg-black text-white rounded-xl text-xs font-bold hover:bg-zinc-800"
                     >
                       Delete Item
                     </button>
@@ -326,9 +303,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                   drag={allItems.length > 1 ? 'x' : false}
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.25}
-                  onDrag={(_e, info) => setDragProgress(info.offset.x)}
                   onDragEnd={(_e, info) => {
-                    setDragProgress(0);
                     if (info.offset.x < -40 || info.velocity.x < -200) {
                       if (hasNext) goToNext();
                     } else if (info.offset.x > 40 || info.velocity.x > 200) {
@@ -338,14 +313,14 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                   className="relative aspect-4/3 w-full rounded-3xl bg-zinc-100 overflow-hidden border border-zinc-200 select-none cursor-grab active:cursor-grabbing"
                 >
                   <img
-                    src={item.images[activeImageIndex] || item.images[0] || ''}
+                    src={getPhotoUrl(item.images[activeImageIndex]) || getPhotoUrl(item.images[0]) || ''}
                     alt={item.name}
                     className="w-full h-full object-cover pointer-events-none"
                   />
 
                   {/* Low stock warning pill overlay */}
                   {isLowStock && (
-                    <div className="absolute top-3 left-3 bg-rose-600 text-white text-[11px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-white">
+                    <div className="absolute top-3 left-3 bg-black text-white text-[11px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-white">
                       <AlertTriangle className="w-3.5 h-3.5 stroke-[2.5]" />
                       <span>LOW STOCK ({item.quantity}/{item.minQuantity})</span>
                     </div>
@@ -403,11 +378,11 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                         }}
                         className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all ${
                           activeImageIndex === i
-                            ? 'border-orange-500 scale-105'
+                            ? 'border-zinc-900 scale-105'
                             : 'border-zinc-200 opacity-70 hover:opacity-100'
                         }`}
                       >
-                        <img src={img} alt="thumbnail" className="w-full h-full object-cover" />
+                        <img src={getPhotoUrl(img)} alt="thumbnail" className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>
@@ -418,10 +393,9 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                   <span
-                    className="px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5"
-                    style={{ backgroundColor: `${cat?.color || '#FF5C00'}15`, color: cat?.color || '#FF5C00' }}
+                    className={`px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 border border-zinc-200 ${cat?.color || 'pattern-solid-black'}`}
                   >
-                    <CategoryIcon name={cat?.icon || 'Package'} className="w-3.5 h-3.5" color={cat?.color} />
+                    <CategoryIcon name={cat?.icon || 'Package'} className="w-3.5 h-3.5" />
                     <span>{cat?.name || 'Category'}</span>
                   </span>
 
@@ -449,9 +423,9 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                       haptic.light();
                       if (onSelectLocation) onSelectLocation(item.locationPath!);
                     }}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-3 py-1.5 rounded-xl cursor-pointer transition-colors"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-3 py-1.5 rounded-xl cursor-pointer transition-colors"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-orange-600" />
+                    <MapPin className="w-3.5 h-3.5 text-zinc-900" />
                     <span>{item.locationPath}</span>
                   </div>
                 )}
@@ -489,10 +463,10 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                         haptic.light();
                         onUpdateQuantity(item, +1);
                       }}
-                      className="w-12 h-12 rounded-2xl bg-orange-500 hover:bg-orange-600 active:scale-90 text-white flex items-center justify-center font-bold transition-all"
+                      className="w-12 h-12 rounded-2xl bg-black hover:bg-zinc-800 active:scale-90 text-white flex items-center justify-center font-bold transition-all"
                       title="Add 1 unit"
                     >
-                      <Plus className="w-5 h-5 stroke-[3]" />
+                      <Plus className="w-5 h-5 stroke-[2]" />
                     </button>
                   </div>
                 </div>

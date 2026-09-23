@@ -222,12 +222,11 @@ export default function App() {
   // Backup & Restore
   const handleExportBackup = async () => {
     try {
-      const jsonStr = await exportVaultData();
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const blob = await exportVaultData();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `myvault-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `myvault-backup-${new Date().toISOString().split('T')[0]}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -241,8 +240,7 @@ export default function App() {
 
   const handleImportBackup = async (file: File) => {
     try {
-      const text = await file.text();
-      const res = await importVaultData(text);
+      const res = await importVaultData(file);
       await reloadData();
       showToast(`Restored ${res.itemsCount} items from backup!`);
     } catch (err: any) {
@@ -295,7 +293,7 @@ export default function App() {
           {toastMessage.type === 'error' ? (
             <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
           )}
           <span className="text-xs font-bold">{toastMessage.text}</span>
         </div>

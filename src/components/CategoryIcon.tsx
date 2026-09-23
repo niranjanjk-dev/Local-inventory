@@ -64,5 +64,6 @@ export const AVAILABLE_CATEGORY_ICONS = Object.keys(ICON_MAP);
 
 export const CategoryIcon: React.FC<CategoryIconProps> = ({ name, className = 'w-5 h-5', color, size }) => {
   const IconComponent = ICON_MAP[name] || Package;
-  return <IconComponent className={className} style={color ? { color } : undefined} size={size} />;
+  const isHexColor = color?.startsWith('#') || color?.startsWith('rgb');
+  return <IconComponent className={className} style={isHexColor ? { color } : undefined} size={size} />;
 };

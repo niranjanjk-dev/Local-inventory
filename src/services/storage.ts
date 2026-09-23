@@ -1,5 +1,7 @@
 import { VaultItem, Category, StorageLocation, VaultBackup } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_LOCATIONS, INITIAL_SAMPLE_ITEMS } from '../data/sampleData';
+import JSZip from 'jszip';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 const DB_NAME = 'MyVault_LocalDB';
 const DB_VERSION = 2;
@@ -125,7 +127,17 @@ export async function getAllCategories(): Promise<Category[]> {
     const tx = db.transaction('categories', 'readonly');
     const store = tx.objectStore('categories');
     const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
+    req.onsuccess = () => {
+      const cats = req.result || [];
+      const mapped = cats.map((c: Category, index: number) => {
+        if (c.color && c.color.startsWith('#')) {
+          const patterns = ['pattern-solid-black', 'pattern-stripes', 'pattern-dots', 'pattern-checks', 'pattern-crosshatch', 'pattern-stripes-light', 'pattern-dots-dark'];
+          c.color = patterns[index % patterns.length];
+        }
+        return c;
+      });
+      resolve(mapped);
+    };
     req.onerror = () => reject(req.error);
   });
 }
@@ -215,7 +227,7 @@ export async function deleteLocation(id: string): Promise<void> {
 }
 
 // Backup & Export / Import
-export async function exportVaultData(): Promise<string> {
+export async function exportVaultData(): Promise<Blob> {
   const items = await getAllItems();
   const categories = await getAllCategories();
   const locations = await getAllLocations();
@@ -228,13 +240,76 @@ export async function exportVaultData(): Promise<string> {
     locations,
   };
 
-  return JSON.stringify(backup, null, 2);
+  const zip = new JSZip();
+  zip.file('backup.json', JSON.stringify(backup, null, 2));
+
+  // Bundle local filesystem photos into the ZIP
+  for (const item of items) {
+    for (const imageUri of item.images) {
+      if (imageUri.includes('/photos/')) {
+        const filename = imageUri.split('/').pop();
+        if (filename) {
+          try {
+            const fileData = await Filesystem.readFile({
+              path: `photos/${filename}`,
+              directory: Directory.Data,
+            });
+            zip.file(`photos/${filename}`, fileData.data, { base64: true });
+          } catch (err) {
+            console.error(`Failed to read file ${imageUri} for export:`, err);
+          }
+        }
+      }
+    }
+  }
+
+  // Generate the ZIP blob
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  return zipBlob;
 }
 
-export async function importVaultData(jsonString: string): Promise<{ itemsCount: number; categoriesCount: number }> {
-  const data: VaultBackup = JSON.parse(jsonString);
+export async function importVaultData(file: File): Promise<{ itemsCount: number; categoriesCount: number }> {
+  // Load ZIP file
+  const zip = await JSZip.loadAsync(file);
+  const backupStr = await zip.file('backup.json')?.async('string');
+  
+  if (!backupStr) {
+    throw new Error('Invalid backup file. Could not find backup.json in the zip archive.');
+  }
+
+  const data: VaultBackup = JSON.parse(backupStr);
   if (!data || !Array.isArray(data.items)) {
     throw new Error('Invalid backup file format. Expected a valid MyVault export.');
+  }
+
+  // Extract photos and write them to the local device filesystem
+  for (const item of data.items) {
+    const updatedImages = [];
+    for (const imageUri of item.images) {
+      if (imageUri.includes('/photos/')) {
+        const filename = imageUri.split('/').pop();
+        if (filename && zip.file(`photos/${filename}`)) {
+          try {
+            const base64Data = await zip.file(`photos/${filename}`)!.async('base64');
+            const savedFile = await Filesystem.writeFile({
+              path: `photos/${filename}`,
+              data: base64Data,
+              directory: Directory.Data,
+              recursive: true,
+            });
+            updatedImages.push(savedFile.uri);
+          } catch (err) {
+            console.error(`Failed to restore photo ${filename}`, err);
+            updatedImages.push(imageUri); // Fallback to old URI if write fails
+          }
+        } else {
+          updatedImages.push(imageUri); // Keep original if not in zip
+        }
+      } else {
+        updatedImages.push(imageUri); // Keep default / remote images
+      }
+    }
+    item.images = updatedImages;
   }
 
   const db = await getDB();

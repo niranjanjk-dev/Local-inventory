@@ -3,6 +3,7 @@ import { VaultItem, Category, StorageLocation } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { AddCategoryModal } from './AddCategoryModal';
 import { SAMPLE_IMAGES } from '../data/sampleData';
+import { savePhotoToFileSystem } from '../utils/fileSystem';
 import { haptic } from '../utils/haptics';
 import {
   Camera,
@@ -151,17 +152,32 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const selectedLoc = locations.find((l) => l.id === locationId);
     const now = Date.now();
 
+    // Process images: save base64 to filesystem and keep URIs
+    let processedImages = [SAMPLE_IMAGES.arduino];
+    if (images.length > 0) {
+      processedImages = [];
+      for (const img of images) {
+        try {
+          const uri = await savePhotoToFileSystem(img);
+          processedImages.push(uri);
+        } catch (err) {
+          console.error('Failed to save image to filesystem', err);
+          processedImages.push(img); // Fallback
+        }
+      }
+    }
+
     const itemData: VaultItem = {
       id: initialItem?.id || `item_${now}_${Math.random().toString(36).substring(2, 7)}`,
       name: name.trim(),
-      images: images.length > 0 ? images : [SAMPLE_IMAGES.arduino],
+      images: processedImages,
       categoryId: categoryId || categories[0]?.id || 'cat_misc',
       subcategory: subcategory.trim() || undefined,
       quantity: Math.max(0, quantity),
@@ -193,8 +209,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
         {/* Header */}
         <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between shrink-0 bg-white">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-              <Plus className="w-5 h-5 stroke-[2.5]" />
+            <div className="w-8 h-8 rounded-xl bg-zinc-100 text-black flex items-center justify-center">
+              <Plus className="w-5 h-5 stroke-[2]" />
             </div>
             <div>
               <h2 className="text-lg font-extrabold text-zinc-900 tracking-tight">
@@ -224,7 +240,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-2.5 gap-2">
               <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider shrink-0">
-                Item Photos {images.length > 0 && <span className="text-orange-600">({images.length})</span>}
+                Item Photos {images.length > 0 && <span className="text-zinc-500">({images.length})</span>}
               </label>
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -236,7 +252,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   className="px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 active:scale-95 text-zinc-700 text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap"
                   title="Take photo with camera"
                 >
-                  <Camera className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                  <Camera className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
                   <span>Camera</span>
                 </button>
                 <button
@@ -266,7 +282,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             {/* Removed HTML5 Camera Viewfinder */}
 
             {cameraError && (
-              <p className="text-xs text-rose-500 font-semibold mb-2">{cameraError}</p>
+              <p className="text-xs text-black font-semibold mb-2">{cameraError}</p>
             )}
 
             {/* Image Preview Carousel */}
@@ -289,7 +305,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                         haptic.light();
                         removeImage(idx);
                       }}
-                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-80 hover:opacity-100"
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black text-white flex items-center justify-center opacity-80 hover:opacity-100"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -299,7 +315,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-zinc-300 hover:border-orange-400 bg-zinc-50 hover:bg-orange-50/50 flex flex-col items-center justify-center text-zinc-400 hover:text-orange-600 transition-colors shrink-0"
+                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 hover:bg-zinc-100 flex flex-col items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
                 >
                   <Plus className="w-6 h-6" />
                   <span className="text-[10px] font-bold mt-1">Add Photo</span>
@@ -308,7 +324,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-zinc-300 hover:border-orange-400 rounded-2xl p-6 flex flex-col items-center justify-center bg-zinc-50 hover:bg-orange-50/50 cursor-pointer transition-colors"
+                className="border-2 border-dashed border-zinc-300 hover:border-zinc-400 rounded-2xl p-6 flex flex-col items-center justify-center bg-zinc-50 hover:bg-zinc-100 cursor-pointer transition-colors"
               >
                 <ImageIcon className="w-8 h-8 text-zinc-400 mb-1" />
                 <span className="text-xs font-bold text-zinc-700">Add or snap photo</span>
@@ -323,7 +339,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               htmlFor="item-name-input"
               className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-1.5"
             >
-              Item Name <span className="text-orange-600">*</span>
+              Item Name <span className="text-zinc-900">*</span>
             </label>
             <input
               id="item-name-input"
@@ -332,7 +348,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Arduino Mega 2560 or LEGO Pilot..."
-              className="w-full bg-zinc-100 focus:bg-white text-zinc-900 text-sm font-bold px-4 py-3 rounded-2xl border border-zinc-200 focus:border-orange-500 outline-none transition-all"
+              className="w-full bg-zinc-100 focus:bg-white text-zinc-900 text-sm font-bold px-4 py-3 rounded-2xl border border-zinc-200 focus:border-zinc-900 outline-none transition-all"
             />
           </div>
 
@@ -340,7 +356,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider">
-                Category <span className="text-orange-600">*</span>
+                Category <span className="text-zinc-900">*</span>
               </label>
               <button
                 type="button"
@@ -349,9 +365,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   setSubParentIdForAddModal(undefined);
                   setShowAddCatModal(true);
                 }}
-                className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                className="text-xs font-bold text-zinc-900 hover:text-black flex items-center gap-1"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add Category
+                <Plus className="w-3.5 h-3.5 stroke-[2]" /> Add Category
               </button>
             </div>
 
@@ -369,7 +385,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     }}
                     className={`p-2 rounded-xl text-left flex items-center gap-2 transition-all ${
                       isSelected
-                        ? 'bg-orange-500 text-white font-bold'
+                        ? 'bg-black text-white font-bold'
                         : 'bg-white text-zinc-700 hover:bg-zinc-100 font-semibold border border-zinc-100'
                     }`}
                   >
@@ -391,9 +407,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   setSubParentIdForAddModal(undefined);
                   setShowAddCatModal(true);
                 }}
-                className="p-2 rounded-xl text-left flex items-center gap-1.5 border-2 border-dashed border-orange-300 bg-orange-50/60 hover:bg-orange-100 text-orange-600 font-extrabold text-xs transition-colors"
+                className="p-2 rounded-xl text-left flex items-center gap-1.5 border-2 border-dashed border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-extrabold text-xs transition-colors"
               >
-                <Plus className="w-4 h-4 stroke-[3] shrink-0" />
+                <Plus className="w-4 h-4 stroke-[2] shrink-0" />
                 <span className="truncate">+ New</span>
               </button>
             </div>
@@ -411,9 +427,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     setSubParentIdForAddModal(categoryId);
                     setShowAddCatModal(true);
                   }}
-                  className="text-[11px] font-bold text-orange-600 hover:text-orange-700 flex items-center gap-0.5"
+                  className="text-[11px] font-bold text-zinc-900 hover:text-black flex items-center gap-0.5"
                 >
-                  <Plus className="w-3 h-3 stroke-[3]" /> Add Sub-collection
+                  <Plus className="w-3 h-3 stroke-[2]" /> Add Sub-collection
                 </button>
               </div>
 
@@ -444,7 +460,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                       }}
                       className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         isSubSelected
-                          ? 'bg-orange-500 text-white'
+                          ? 'bg-black text-white'
                           : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100'
                       }`}
                     >
@@ -495,10 +511,10 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   haptic.light();
                   setQuantity(quantity + 1);
                 }}
-                className="w-10 h-10 rounded-xl bg-orange-500 text-white hover:bg-orange-600 active:scale-95 flex items-center justify-center font-bold transition-transform"
+                className="w-10 h-10 rounded-xl bg-black text-white hover:bg-zinc-800 active:scale-95 flex items-center justify-center font-bold transition-transform"
                 aria-label="Increase quantity"
               >
-                <Plus className="w-4 h-4 stroke-[3]" />
+                <Plus className="w-4 h-4 stroke-[2]" />
               </button>
             </div>
           </div>
@@ -510,7 +526,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
-                <MapPin className="w-4 h-4 text-orange-500" />
+                <MapPin className="w-4 h-4 text-zinc-500" />
               </div>
               <select
                 value={locationId}
@@ -518,7 +534,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   haptic.selection();
                   setLocationId(e.target.value);
                 }}
-                className="w-full bg-zinc-100 focus:bg-white text-zinc-900 text-sm font-semibold pl-10 pr-4 py-3 rounded-2xl border border-zinc-200 focus:border-orange-500 outline-none cursor-pointer"
+                className="w-full bg-zinc-100 focus:bg-white text-zinc-900 text-sm font-semibold pl-10 pr-4 py-3 rounded-2xl border border-zinc-200 focus:border-zinc-900 outline-none cursor-pointer"
               >
                 <option value="">No location assigned</option>
                 {locations.map((loc) => (
@@ -538,7 +554,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 haptic.light();
                 setShowMoreDetails(!showMoreDetails);
               }}
-              className="w-full py-2 flex items-center justify-between text-xs font-extrabold text-zinc-700 hover:text-orange-600 transition-colors"
+              className="w-full py-2 flex items-center justify-between text-xs font-extrabold text-zinc-700 hover:text-black transition-colors"
             >
               <span>{showMoreDetails ? 'Hide Extra Details' : 'More Details (Condition, Price, Notes, Tags...)'}</span>
               {showMoreDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -687,7 +703,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                           <button
                             type="button"
                             onClick={() => removeTag(tag)}
-                            className="hover:text-rose-500"
+                            className="hover:text-black"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -720,9 +736,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               id="save-item-submit-button"
               type="submit"
               disabled={!name.trim()}
-              className="w-full py-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+              className="w-full py-4 bg-black hover:bg-zinc-800 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all"
             >
-              <Check className="w-5 h-5 stroke-[3]" />
+              <Check className="w-5 h-5 stroke-[2]" />
               <span>{isEditing ? 'Save Changes' : 'Save to Vault'}</span>
             </button>
           </div>

@@ -4,7 +4,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { VaultyMascot } from './CuteIllustrations';
 import { AddCategoryModal } from './AddCategoryModal';
 import { haptic } from '../utils/haptics';
-import { ThemeConfig, COLOR_OPTIONS, DEFAULT_THEME } from '../utils/theme';
+import { ThemeConfig } from '../utils/theme';
 import { usePWAInstall } from '../utils/usePWAInstall';
 import {
   Download,
@@ -87,7 +87,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-zinc-100 text-black flex items-center justify-center">
               <PieChart className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-extrabold text-zinc-900">Collection Statistics</h3>
@@ -102,11 +102,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
           <div className="bg-zinc-50 p-3 rounded-2xl border border-zinc-200 text-center">
             <span className="text-[10px] font-bold uppercase text-zinc-400 block mb-0.5">Pieces</span>
-            <span className="text-xl font-black text-orange-600">{totalUnits}</span>
+            <span className="text-xl font-black text-black">{totalUnits}</span>
           </div>
           <div className="bg-zinc-50 p-3 rounded-2xl border border-zinc-200 text-center">
             <span className="text-[10px] font-bold uppercase text-zinc-400 block mb-0.5">Est. Value</span>
-            <span className="text-xl font-black text-emerald-600">
+            <span className="text-xl font-black text-black">
               ${totalValue > 999 ? (totalValue / 1000).toFixed(1) + 'k' : totalValue.toFixed(0)}
             </span>
           </div>
@@ -117,7 +117,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <span className="text-[11px] font-extrabold uppercase text-zinc-400 tracking-wider block mb-1">
             Category Distribution
           </span>
-          <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden flex">
+          <div className="h-10 w-full bg-zinc-100 border border-zinc-200 flex overflow-hidden rounded-xl">
             {categories.map((cat) => {
               const count = items.filter((i) => i.categoryId === cat.id).length;
               if (count === 0 || totalItems === 0) return null;
@@ -125,7 +125,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               return (
                 <div
                   key={cat.id}
-                  style={{ width: `${pct}%`, backgroundColor: cat.color }}
+                  style={{ width: `${pct}%` }}
+                  className={`h-full ${cat.color}`}
                   title={`${cat.name}: ${count} (${pct.toFixed(0)}%)`}
                 />
               );
@@ -136,8 +137,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               const count = items.filter((i) => i.categoryId === cat.id).length;
               if (count === 0) return null;
               return (
-                <span key={cat.id} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                <span key={cat.id} className="flex items-center gap-1.5">
+                  <span className={`w-4 h-4 rounded-md border border-zinc-200 ${cat.color}`} />
                   {cat.name} ({count})
                 </span>
               );
@@ -146,8 +147,36 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </div>
 
+      {/* UI Aesthetics */}
+      {theme && onUpdateTheme && (
+        <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-extrabold text-zinc-900">Border Outlines</h3>
+              <p className="text-[11px] text-zinc-500">Show structural container borders</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                haptic.medium();
+                onUpdateTheme({ ...theme, hideBorders: !theme.hideBorders });
+              }}
+              className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                !theme.hideBorders ? 'bg-black' : 'bg-zinc-200'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${
+                  !theme.hideBorders ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Customizable Categories Section */}
-      <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
+      <div className="bg-white rounded-2xl p-5 border border-zinc-200 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-extrabold text-zinc-900">Categories ({categories.length})</h3>
@@ -159,9 +188,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               haptic.medium();
               setShowAddCatModal(true);
             }}
-            className="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-3.5 py-1.5 bg-black hover:bg-zinc-800 text-white font-bold text-xs rounded-2xl border border-zinc-200 flex items-center gap-1.5 transition-colors shadow-sm"
           >
-            <Plus className="w-4 h-4 stroke-[3]" /> Add Category
+            <Plus className="w-4 h-4 stroke-[2]" /> Add Category
           </button>
         </div>
 
@@ -172,14 +201,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             return (
               <div
                 key={cat.id}
-                className="p-3 rounded-2xl bg-zinc-50 hover:bg-zinc-100/70 border border-zinc-200 flex items-center justify-between gap-3 transition-colors"
+                className="p-3 rounded-2xl bg-white hover:bg-zinc-50 border border-zinc-200 flex items-center justify-between gap-3 transition-colors shadow-sm"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                    className={`w-9 h-9 rounded-2xl border border-zinc-200 flex items-center justify-center shrink-0 ${cat.color}`}
                   >
-                    <CategoryIcon name={cat.icon} className="w-4 h-4" color={cat.color} />
+                    <CategoryIcon name={cat.icon} className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <span className="text-xs font-bold text-zinc-900 block break-words leading-tight">
@@ -198,7 +226,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       haptic.warning();
                       setCategoryToDelete(cat);
                     }}
-                    className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
+                    className="p-2 text-zinc-400 hover:text-black hover:bg-zinc-50 rounded-xl transition-colors shrink-0"
                     title={`Delete collection "${cat.name}"`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -210,68 +238,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </div>
 
-      {/* Theme & Customization Card */}
-      <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-              <Palette className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-extrabold text-zinc-900">Appearance & Theme</h3>
-              <p className="text-[11px] text-zinc-500 font-medium">Select your vault accent color</p>
-            </div>
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 border border-orange-200/50">
-            Active
-          </span>
-        </div>
 
-        {/* Accent Color Palette Swatches */}
-        <div>
-          <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-2.5">
-            Accent Color
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {COLOR_OPTIONS.map((c) => {
-              const isSelected = (theme?.accent || DEFAULT_THEME.accent) === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => {
-                    haptic.selection();
-                    onUpdateTheme?.({
-                      accent: c.id,
-                      radius: 'compact',
-                    });
-                  }}
-                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
-                    isSelected
-                      ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
-                      : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-800'
-                  }`}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center ring-2 ring-white/40 shadow-xs"
-                    style={{ backgroundColor: c.hex }}
-                  >
-                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold block truncate leading-tight">{c.name}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
       {/* Local Backup & Data Management (Offline IndexedDB / Export / Import) */}
       <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-3">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-zinc-100 text-black flex items-center justify-center">
             <HardDrive className="w-4 h-4" />
           </div>
           <div>
@@ -283,7 +255,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json,application/json"
+          accept=".zip,application/zip,application/x-zip-compressed"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -298,7 +270,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             }}
             className="p-3.5 rounded-2xl bg-zinc-900 hover:bg-black text-white font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-98 transition-transform text-center"
           >
-            <Download className="w-5 h-5 text-orange-400 mb-0.5" />
+            <Download className="w-5 h-5 text-zinc-400 mb-0.5" />
             <span>Export Backup</span>
             <span className="text-[10px] text-zinc-400 font-normal">Save .json file</span>
           </button>
@@ -321,8 +293,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         {/* Reset & Clear Database Controls */}
         <div className="pt-2 border-t border-zinc-100 flex flex-col gap-2">
           {showResetConfirm ? (
-            <div className="bg-amber-50 p-3 rounded-2xl border border-amber-200 flex items-center justify-between">
-              <span className="text-xs text-amber-800 font-bold">Reset to starter demo collection?</span>
+            <div className="bg-zinc-100 p-3 rounded-2xl border border-zinc-200 flex items-center justify-between">
+              <span className="text-xs text-black font-bold">Reset to starter demo collection?</span>
               <div className="flex gap-1.5">
                 <button
                   type="button"
@@ -341,7 +313,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     onResetSampleData();
                     setShowResetConfirm(false);
                   }}
-                  className="px-2.5 py-1 bg-amber-600 text-white text-xs font-bold rounded-lg"
+                  className="px-2.5 py-1 bg-black text-white text-xs font-bold rounded-lg"
                 >
                   Reset
                 </button>
@@ -362,8 +334,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           )}
 
           {showClearConfirm ? (
-            <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200 flex items-center justify-between">
-              <span className="text-xs text-rose-800 font-bold">Delete all items and storage data?</span>
+            <div className="bg-zinc-50 p-3 rounded-2xl border border-zinc-200 flex items-center justify-between">
+              <span className="text-xs text-black font-bold">Delete all items and storage data?</span>
               <div className="flex gap-1.5">
                 <button
                   type="button"
@@ -382,7 +354,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     onClearAllData();
                     setShowClearConfirm(false);
                   }}
-                  className="px-2.5 py-1 bg-rose-600 text-white text-xs font-bold rounded-lg"
+                  className="px-2.5 py-1 bg-black text-white text-xs font-bold rounded-lg"
                 >
                   Confirm Delete
                 </button>
@@ -395,7 +367,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 haptic.error();
                 setShowClearConfirm(true);
               }}
-              className="w-full py-2.5 px-3 rounded-2xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2.5 px-3 rounded-2xl text-xs font-bold text-black bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Clear All Vault Data</span>
@@ -422,7 +394,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white max-w-sm w-full rounded-3xl p-5 border-2 border-zinc-200 space-y-4 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-zinc-100 text-black flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div>
@@ -455,7 +427,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   onDeleteCategory(categoryToDelete.id);
                   setCategoryToDelete(null);
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-zinc-800 transition-colors"
               >
                 Delete
               </button>

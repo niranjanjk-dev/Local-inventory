@@ -6,15 +6,15 @@ function makeSvgDataUri(svgContent: string): string {
 }
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'cat_electronics', name: 'Electronics', icon: 'Cpu', color: '#FF5C00', description: 'Microcontrollers, sensors, ICs, & wiring' },
-  { id: 'cat_lego', name: 'LEGO', icon: 'Boxes', color: '#F59E0B', description: 'Sets, minifigs, Technic gears, & bulk bricks' },
-  { id: 'cat_robotics', name: 'Robotics', icon: 'Bot', color: '#EC4899', description: 'Motors, servos, chassis, ESCs, & batteries' },
-  { id: 'cat_tools', name: 'Tools', icon: 'Wrench', color: '#3B82F6', description: 'Soldering, screwdrivers, pliers, & multimeters' },
-  { id: 'cat_mechanical', name: 'Mechanical', icon: 'Cog', color: '#8B5CF6', description: 'Bearings, shafts, pulleys, springs, & gears' },
-  { id: 'cat_books', name: 'Books', icon: 'BookOpen', color: '#10B981', description: 'Technical manuals, datasheets, & guides' },
-  { id: 'cat_gaming', name: 'Gaming', icon: 'Gamepad2', color: '#6366F1', description: 'Retro consoles, cartridges, mods, & parts' },
-  { id: 'cat_hardware', name: 'Hardware', icon: 'Nut', color: '#64748B', description: 'M2/M3/M4 screws, nuts, standoffs, & washers' },
-  { id: 'cat_misc', name: 'Miscellaneous', icon: 'Archive', color: '#14B8A6', description: 'Spare parts and general physical items' },
+  { id: 'cat_electronics', name: 'Electronics', icon: 'Cpu', color: 'pattern-stripes', description: 'Microcontrollers, sensors, ICs, & wiring' },
+  { id: 'cat_lego', name: 'LEGO', icon: 'Boxes', color: 'pattern-dots', description: 'Sets, minifigs, Technic gears, & bulk bricks' },
+  { id: 'cat_robotics', name: 'Robotics', icon: 'Bot', color: 'pattern-checks', description: 'Motors, servos, chassis, ESCs, & batteries' },
+  { id: 'cat_tools', name: 'Tools', icon: 'Wrench', color: 'pattern-solid-zinc-600', description: 'Soldering, screwdrivers, pliers, & multimeters' },
+  { id: 'cat_mechanical', name: 'Mechanical', icon: 'Cog', color: 'pattern-crosshatch', description: 'Bearings, shafts, pulleys, springs, & gears' },
+  { id: 'cat_books', name: 'Books', icon: 'BookOpen', color: 'pattern-solid-black', description: 'Technical manuals, datasheets, & guides' },
+  { id: 'cat_gaming', name: 'Gaming', icon: 'Gamepad2', color: 'pattern-dots-dark', description: 'Retro consoles, cartridges, mods, & parts' },
+  { id: 'cat_hardware', name: 'Hardware', icon: 'Nut', color: 'pattern-solid-zinc-400', description: 'M2/M3/M4 screws, nuts, standoffs, & washers' },
+  { id: 'cat_misc', name: 'Miscellaneous', icon: 'Archive', color: 'pattern-stripes-light', description: 'Spare parts and general physical items' },
 ];
 
 export const DEFAULT_LOCATIONS: StorageLocation[] = [

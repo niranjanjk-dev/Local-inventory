@@ -83,9 +83,9 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
             haptic.medium();
             setShowAddModal(true);
           }}
-          className="px-3.5 py-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs flex items-center gap-1.5 transition-all"
+          className="px-3.5 py-2 bg-black hover:bg-zinc-800 active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs flex items-center gap-1.5 transition-all"
         >
-          <Plus className="w-4 h-4 stroke-[3]" /> Add Location
+          <Plus className="w-4 h-4 stroke-[2]" /> Add Location
         </button>
       </div>
 
@@ -99,7 +99,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter storage locations..."
-          className="w-full bg-zinc-100/80 focus:bg-white text-zinc-900 text-sm font-medium pl-10 pr-4 py-2.5 rounded-2xl border border-zinc-200/80 focus:border-orange-500 outline-none"
+          className="w-full bg-zinc-100/80 focus:bg-white text-zinc-900 text-sm font-medium pl-10 pr-4 py-2.5 rounded-2xl border border-zinc-200/80 focus:border-zinc-900 outline-none"
         />
       </div>
 
@@ -118,7 +118,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                 haptic.medium();
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 bg-orange-500 text-white font-bold text-xs rounded-xl"
+              className="px-4 py-2 bg-black text-white font-bold text-xs rounded-xl"
             >
               Create First Location
             </button>
@@ -134,7 +134,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                 key={loc.id}
                 className={`bg-white rounded-3xl border transition-all overflow-hidden ${
                   isSelected
-                    ? 'border-orange-500 ring-2 ring-orange-200 shadow-md'
+                    ? 'border-zinc-900 ring-2 ring-zinc-300 shadow-md'
                     : 'border-zinc-200/90 shadow-xs hover:border-zinc-300'
                 }`}
               >
@@ -146,7 +146,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                   className="p-4 cursor-pointer flex items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-10 h-10 rounded-2xl bg-zinc-100 text-black flex items-center justify-center shrink-0 mt-0.5">
                       <MapPin className="w-5 h-5" />
                     </div>
 
@@ -184,7 +184,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-black text-orange-600 bg-orange-100/70 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-black text-black bg-zinc-100 px-2.5 py-1 rounded-full">
                       {locItems.length} {locItems.length === 1 ? 'item' : 'items'}
                     </span>
                     <button
@@ -196,7 +196,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                           onDeleteLocation(loc.id);
                         }
                       }}
-                      className="p-1.5 text-zinc-400 hover:text-rose-600 rounded-lg hover:bg-zinc-100 transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-black rounded-lg hover:bg-zinc-100 transition-colors"
                       title="Delete Location"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -218,7 +218,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                             haptic.light();
                             onNavigateToCollection(loc.id);
                           }}
-                          className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-0.5"
+                          className="text-xs font-bold text-zinc-900 hover:underline flex items-center gap-0.5"
                         >
                           View in Collection <ArrowRight className="w-3.5 h-3.5" />
                         </button>
@@ -240,9 +240,9 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                                 haptic.light();
                                 onSelectItem(item);
                               }}
-                              className="bg-white p-2 rounded-2xl border border-zinc-200/80 flex items-center gap-2 cursor-pointer hover:border-orange-300 transition-all shadow-xs"
+                              className="bg-white p-2 rounded-2xl border border-zinc-200 flex items-center gap-2 cursor-pointer transition-all"
                             >
-                              <div className="w-10 h-10 rounded-xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-100">
+                              <div className="w-10 h-10 rounded-2xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
                                 <img
                                   src={item.images[0] || ''}
                                   alt={item.name}
@@ -273,10 +273,10 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
       {/* Add Location Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-5 shadow-2xl border border-zinc-200 space-y-4">
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl border border-zinc-200 space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-zinc-100 text-black flex items-center justify-center">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-extrabold text-zinc-900">Add Storage Location</h3>
@@ -293,7 +293,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-zinc-700 block mb-1">
-                  Location Name <span className="text-orange-600">*</span>
+                  Location Name <span className="text-zinc-900">*</span>
                 </label>
                 <input
                   type="text"
@@ -301,7 +301,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                   value={newLocName}
                   onChange={(e) => setNewLocName(e.target.value)}
                   placeholder="e.g. Drawer A3, Box 2, Top Shelf"
-                  className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-xl text-sm font-semibold outline-none border border-zinc-200 focus:border-orange-500"
+                  className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-xl text-sm font-semibold outline-none border border-zinc-200 focus:border-zinc-900"
                 />
               </div>
 
@@ -312,7 +312,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                 <select
                   value={newLocParentId}
                   onChange={(e) => setNewLocParentId(e.target.value)}
-                  className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3 py-2.5 rounded-xl text-xs font-semibold outline-none border border-zinc-200 focus:border-orange-500"
+                  className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3 py-2.5 rounded-xl text-xs font-semibold outline-none border border-zinc-200 focus:border-zinc-900"
                 >
                   <option value="">None (Top Level e.g. Workshop, Bedroom)</option>
                   {locations.map((loc) => (
@@ -350,7 +350,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                 <button
                   type="submit"
                   disabled={!newLocName.trim()}
-                  className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 shadow-xs"
+                  className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-black hover:bg-zinc-800 disabled:opacity-50 shadow-xs"
                 >
                   Create Location
                 </button>

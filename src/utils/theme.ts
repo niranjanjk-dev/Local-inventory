@@ -6,6 +6,7 @@ export type RadiusLevel = 'sharp' | 'compact' | 'subtle';
 export interface ThemeConfig {
   accent: AccentColor;
   radius: RadiusLevel;
+  hideBorders?: boolean;
 }
 
 export interface ColorOption {
@@ -101,6 +102,7 @@ const THEME_STORAGE_KEY = 'myvault_theme_preferences_v2';
 export const DEFAULT_THEME: ThemeConfig = {
   accent: 'indigo', // New color as requested!
   radius: 'compact', // Reduced border radius as requested!
+  hideBorders: false,
 };
 
 export function getSavedTheme(): ThemeConfig {
@@ -112,6 +114,7 @@ export function getSavedTheme(): ThemeConfig {
     return {
       accent: parsed.accent || DEFAULT_THEME.accent,
       radius: 'compact', // Permanently locked to Modern Compact border radius
+      hideBorders: parsed.hideBorders || false,
     };
   } catch {
     return DEFAULT_THEME;
@@ -134,4 +137,10 @@ export function applyThemeToDOM(theme: ThemeConfig): void {
   const root = document.documentElement;
   root.setAttribute('data-theme', theme.accent);
   root.setAttribute('data-radius', 'compact');
+  
+  if (theme.hideBorders) {
+    document.body.classList.add('hide-borders');
+  } else {
+    document.body.classList.remove('hide-borders');
+  }
 }

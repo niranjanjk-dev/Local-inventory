@@ -11,17 +11,18 @@ interface AddCategoryModalProps {
   onClose: () => void;
 }
 
-const PRESET_COLORS = [
-  '#FF5C00', // Bright Orange
-  '#F59E0B', // Amber
-  '#EC4899', // Pink
-  '#3B82F6', // Blue
-  '#8B5CF6', // Purple
-  '#10B981', // Emerald
-  '#6366F1', // Indigo
-  '#14B8A6', // Teal
-  '#EF4444', // Red
-  '#64748B', // Slate
+const PRESET_PATTERNS = [
+  'pattern-solid-black',
+  'pattern-solid-zinc-800',
+  'pattern-solid-zinc-600',
+  'pattern-solid-zinc-400',
+  'pattern-solid-zinc-200',
+  'pattern-stripes',
+  'pattern-stripes-light',
+  'pattern-dots',
+  'pattern-dots-dark',
+  'pattern-checks',
+  'pattern-crosshatch',
 ];
 
 export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
@@ -38,7 +39,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       const parent = categories.find((c) => c.id === defaultParentId);
       if (parent) return parent.color;
     }
-    return '#FF5C00';
+    return 'pattern-solid-black';
   });
   const [description, setDescription] = useState('');
 
@@ -74,10 +75,9 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
         <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
-              style={{ backgroundColor: color }}
+              className={`w-8 h-8 rounded-2xl flex items-center justify-center border border-zinc-200 ${color}`}
             >
-              <CategoryIcon name={icon} className="w-4 h-4 text-white" />
+              <CategoryIcon name={icon} className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-base font-extrabold text-zinc-900">
@@ -124,7 +124,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                     }
                   }
                 }}
-                className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-2xl text-xs font-bold outline-none border border-zinc-200 focus:border-orange-500 transition-all cursor-pointer"
+                className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-2xl text-xs font-bold outline-none border border-zinc-200 focus:border-zinc-900 transition-all cursor-pointer"
               >
                 <option value="">Top-Level Collection (Primary)</option>
                 {topLevelCategories.map((c) => (
@@ -139,7 +139,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
           <div>
             <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-1">
               {parentId ? 'Sub-collection Name' : 'Collection Name'}{' '}
-              <span className="text-orange-600">*</span>
+              <span className="text-zinc-900">*</span>
             </label>
             <input
               type="text"
@@ -152,7 +152,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   ? 'e.g. Sensors, Microcontrollers, Cables...'
                   : 'e.g. 3D Printing, Mineral Samples, LEGO...'
               }
-              className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-2xl text-sm font-bold outline-none border border-zinc-200 focus:border-orange-500 transition-all"
+              className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3.5 py-2.5 rounded-2xl text-sm font-bold outline-none border border-zinc-200 focus:border-zinc-900 transition-all"
             />
           </div>
 
@@ -171,7 +171,7 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   }}
                   className={`p-2 rounded-xl flex items-center justify-center transition-all ${
                     icon === iconKey
-                      ? 'bg-orange-500 text-white font-bold'
+                      ? 'bg-black text-white font-bold'
                       : 'bg-white text-zinc-700 hover:bg-zinc-200'
                   }`}
                 >
@@ -183,21 +183,20 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
           <div>
             <label className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-1.5">
-              Accent Color
+              Shading Pattern
             </label>
-            <div className="flex items-center gap-2">
-              {PRESET_COLORS.map((col) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {PRESET_PATTERNS.map((pattern) => (
                 <button
-                  key={col}
+                  key={pattern}
                   type="button"
                   onClick={() => {
                     haptic.selection();
-                    setColor(col);
+                    setColor(pattern);
                   }}
-                  className={`w-7 h-7 rounded-full transition-transform ${
-                    color === col ? 'ring-4 ring-orange-200 scale-110' : 'hover:scale-105'
+                  className={`w-8 h-8 transition-transform border border-zinc-200 ${pattern} ${
+                    color === pattern ? 'ring-2 ring-zinc-900 ring-offset-2 scale-110' : 'hover:scale-105'
                   }`}
-                  style={{ backgroundColor: col }}
                 />
               ))}
             </div>
@@ -230,9 +229,9 @@ export const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
             <button
               type="submit"
               disabled={!name.trim()}
-              className="px-5 py-2.5 rounded-2xl text-xs font-extrabold text-white bg-orange-500 hover:bg-orange-600 disabled:opacity-50 transition-all flex items-center gap-1.5"
+              className="px-5 py-2.5 rounded-2xl text-xs font-extrabold text-white bg-black hover:bg-zinc-800 disabled:opacity-50 transition-all flex items-center gap-1.5"
             >
-              <Check className="w-4 h-4 stroke-[3]" />
+              <Check className="w-4 h-4 stroke-[2]" />
               <span>{parentId ? 'Save Sub-collection' : 'Save Collection'}</span>
             </button>
           </div>
