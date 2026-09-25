@@ -272,7 +272,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           >
             <Download className="w-5 h-5 text-zinc-400 mb-0.5" />
             <span>Export Backup</span>
-            <span className="text-[10px] text-zinc-400 font-normal">Save .json file</span>
+            <span className="text-[10px] text-zinc-400 font-normal">Save .zip file</span>
           </button>
 
           {/* Import Button */}

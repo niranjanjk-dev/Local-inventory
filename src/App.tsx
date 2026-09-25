@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { VaultItem, Category, StorageLocation, NavigationTab } from './types';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import {
   getAllItems,
   saveItem,
@@ -222,16 +225,32 @@ export default function App() {
   // Backup & Restore
   const handleExportBackup = async () => {
     try {
-      const blob = await exportVaultData();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `myvault-backup-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      showToast('Backup downloaded successfully!');
+      const { blob, base64 } = await exportVaultData();
+      const fileName = `myvault-backup-${new Date().toISOString().split('T')[0]}.zip`;
+
+      if (Capacitor.isNativePlatform()) {
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64,
+          directory: Directory.Cache
+        });
+        await Share.share({
+          title: 'Export Backup',
+          url: savedFile.uri,
+          dialogTitle: 'Share or Save Backup'
+        });
+        showToast('Backup exported successfully!');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('Backup downloaded successfully!');
+      }
     } catch (err) {
       console.error(err);
       showToast('Failed to export backup', 'error');

@@ -227,7 +227,7 @@ export async function deleteLocation(id: string): Promise<void> {
 }
 
 // Backup & Export / Import
-export async function exportVaultData(): Promise<Blob> {
+export async function exportVaultData(): Promise<{ blob: Blob; base64: string }> {
   const items = await getAllItems();
   const categories = await getAllCategories();
   const locations = await getAllLocations();
@@ -263,9 +263,10 @@ export async function exportVaultData(): Promise<Blob> {
     }
   }
 
-  // Generate the ZIP blob
-  const zipBlob = await zip.generateAsync({ type: 'blob' });
-  return zipBlob;
+  // Generate the ZIP
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const base64 = await zip.generateAsync({ type: 'base64' });
+  return { blob, base64 };
 }
 
 export async function importVaultData(file: File): Promise<{ itemsCount: number; categoriesCount: number }> {
