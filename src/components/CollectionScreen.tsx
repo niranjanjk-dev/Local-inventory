@@ -18,6 +18,7 @@ import {
   ArrowUpDown,
   Trash2,
   FolderPlus,
+  Sparkles,
 } from 'lucide-react';
 
 interface CollectionScreenProps {
@@ -735,7 +736,8 @@ export const CollectionScreen: React.FC<CollectionScreenProps> = ({
                       )}
                     </div>
 
-                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 line-clamp-1 group-hover:text-black transition-colors">
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 line-clamp-1 group-hover:text-black transition-colors flex items-center gap-1.5">
+                      {item.isProcessingAI && <Sparkles className="w-3.5 h-3.5 text-violet-500 animate-pulse shrink-0" />}
                       {item.name}
                     </h3>
                   </div>
@@ -824,7 +826,10 @@ export const CollectionScreen: React.FC<CollectionScreenProps> = ({
                     )}
                   </div>
 
-                  <h3 className="text-sm font-bold text-zinc-900 truncate">{item.name}</h3>
+                  <h3 className="text-sm font-bold text-zinc-900 truncate flex items-center gap-1.5 mt-0.5">
+                    {item.isProcessingAI && <Sparkles className="w-3.5 h-3.5 text-violet-500 animate-pulse shrink-0" />}
+                    {item.name}
+                  </h3>
 
                   <div className="flex items-center gap-2 mt-0.5 text-[11px] text-zinc-500 font-medium">
                     {item.locationPath && (

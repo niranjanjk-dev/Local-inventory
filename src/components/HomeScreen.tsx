@@ -2,7 +2,7 @@ import React from 'react';
 import { VaultItem, Category, NavigationTab } from '../types';
 import { VaultyMascot, EmptyBoxIllustration } from './CuteIllustrations';
 import { CategoryIcon } from './CategoryIcon';
-import { Plus, AlertTriangle, ArrowRight, MapPin } from 'lucide-react';
+import { Plus, AlertTriangle, ArrowRight, MapPin, Sparkles } from 'lucide-react';
 import { getPhotoUrl } from '../utils/fileSystem';
 import { haptic } from '../utils/haptics';
 
@@ -206,7 +206,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   }}
                   className="flex-1 min-w-0 cursor-pointer"
                 >
-                  <h4 className="text-sm font-bold text-zinc-900 truncate">
+                  <h4 className="text-sm font-bold text-zinc-900 truncate flex items-center gap-1.5">
+                    {item.isProcessingAI && <Sparkles className="w-3.5 h-3.5 text-violet-500 animate-pulse" />}
                     {item.name}
                   </h4>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -298,7 +299,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       >
                         {cat?.name || 'Item'}
                       </span>
-                      <h4 className="text-sm font-semibold text-zinc-900 line-clamp-1">
+                      <h4 className="text-sm font-semibold text-zinc-900 line-clamp-1 flex items-center gap-1.5">
+                        {item.isProcessingAI && <Sparkles className="w-3.5 h-3.5 text-violet-500 animate-pulse shrink-0" />}
                         {item.name}
                       </h4>
                     </div>

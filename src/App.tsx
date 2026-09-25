@@ -30,6 +30,8 @@ import { SettingsScreen } from './components/SettingsScreen';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { VaultyMascot } from './components/CuteIllustrations';
 import { ThemeConfig, getSavedTheme, saveTheme, applyThemeToDOM } from './utils/theme';
+import { scanItemWithAI } from './services/aiScan';
+import { getOpenRouterApiKey } from './utils/apiKey';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function App() {
@@ -109,7 +111,7 @@ export default function App() {
   };
 
   // Item CRUD
-  const handleSaveItem = async (itemToSave: VaultItem) => {
+  const handleSaveItem = async (itemToSave: VaultItem, backgroundScanImage?: string) => {
     try {
       await saveItem(itemToSave);
       await reloadData();
@@ -118,7 +120,90 @@ export default function App() {
       if (selectedItem?.id === itemToSave.id) {
         setSelectedItem(itemToSave);
       }
-      showToast(editingItem ? 'Item updated successfully!' : 'Added to your Vault!');
+      showToast(editingItem ? 'Item updated successfully!' : (backgroundScanImage ? 'Item saved! AI scanning in background...' : 'Added to your Vault!'));
+
+      if (backgroundScanImage && itemToSave.isProcessingAI) {
+        // Run AI Scan in background
+        const apiKey = getOpenRouterApiKey();
+        if (apiKey) {
+          // Use a non-blocking IIFE to perform the background work
+          (async () => {
+            try {
+              // Ensure we have latest categories
+              const currentCats = await getAllCategories();
+              const result = await scanItemWithAI(backgroundScanImage, currentCats, apiKey);
+              
+              const updatedItem: VaultItem = {
+                ...itemToSave,
+                name: result.name,
+                brand: result.brand || itemToSave.brand,
+                modelNumber: result.modelNumber || itemToSave.modelNumber,
+                condition: result.condition || itemToSave.condition,
+                tags: result.tags?.length ? Array.from(new Set([...itemToSave.tags, ...result.tags])) : itemToSave.tags,
+                notes: result.notes || itemToSave.notes,
+                quantity: result.quantity !== undefined ? result.quantity : itemToSave.quantity,
+                isProcessingAI: false,
+              };
+
+              // Category mapping/creation
+              let resolvedCategoryId = itemToSave.categoryId;
+              const topLevelCategories = currentCats.filter((c) => !c.parentId);
+              const normalise = (s: string) => s.toLowerCase().trim();
+              const existingTopCat = topLevelCategories.find((c) => normalise(c.name) === normalise(result.categoryName));
+
+              if (existingTopCat) {
+                resolvedCategoryId = existingTopCat.id;
+              } else if (result.isNewCategory) {
+                const newCat: Category = {
+                  id: `cat_ai_${Date.now()}`,
+                  name: result.categoryName,
+                  icon: result.categoryIcon || 'Package',
+                  color: 'pattern-solid-zinc-600',
+                  isCustom: true,
+                  description: `AI-created category for ${result.categoryName}`,
+                };
+                await saveCategory(newCat);
+                resolvedCategoryId = newCat.id;
+              }
+              updatedItem.categoryId = resolvedCategoryId;
+
+              // Subcategory mapping/creation
+              if (result.subcategoryName) {
+                const existingSub = currentCats.find(
+                  (c) => c.parentId === resolvedCategoryId && normalise(c.name) === normalise(result.subcategoryName!)
+                );
+                if (existingSub) {
+                  updatedItem.subcategory = existingSub.name;
+                } else if (result.isNewSubcategory) {
+                  const parentCat = currentCats.find((c) => c.id === resolvedCategoryId);
+                  const newSub: Category = {
+                    id: `cat_ai_sub_${Date.now()}`,
+                    name: result.subcategoryName,
+                    parentId: resolvedCategoryId,
+                    icon: parentCat?.icon || 'Package',
+                    color: parentCat?.color || 'pattern-solid-zinc-400',
+                    isCustom: true,
+                  };
+                  await saveCategory(newSub);
+                  updatedItem.subcategory = newSub.name;
+                } else {
+                  updatedItem.subcategory = result.subcategoryName;
+                }
+              }
+
+              await saveItem(updatedItem);
+              await reloadData();
+              showToast(`AI finished filling details for "${updatedItem.name}"`);
+            } catch (err: any) {
+              console.error('Background AI scan failed:', err);
+              // Save the item without the processing flag so it doesn't spin forever
+              await saveItem({ ...itemToSave, isProcessingAI: false });
+              await reloadData();
+              showToast(`Background scan failed: ${err.message}`, 'error');
+            }
+          })();
+        }
+      }
     } catch (err) {
       console.error(err);
       showToast('Failed to save item locally', 'error');

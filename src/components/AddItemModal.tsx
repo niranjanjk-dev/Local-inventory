@@ -29,7 +29,7 @@ interface AddItemModalProps {
   categories: Category[];
   locations: StorageLocation[];
   initialItem?: VaultItem | null;
-  onSave: (item: VaultItem) => void;
+  onSave: (item: VaultItem, backgroundScanImage?: string) => void;
   onClose: () => void;
   onAddCategory?: (category: Category) => void;
 }
@@ -286,7 +286,12 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    
+    const hasAiKey = Boolean(getOpenRouterApiKey());
+    const hasImage = images.length > 0;
+    const isBackgroundScan = !isEditing && !name.trim() && hasImage && hasAiKey;
+    
+    if (!name.trim() && !isBackgroundScan) return;
 
     const selectedLoc = locations.find((l) => l.id === locationId);
     const now = Date.now();
@@ -306,9 +311,11 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       }
     }
 
+    const finalName = name.trim() || 'AI Scanning...';
+
     const itemData: VaultItem = {
       id: initialItem?.id || `item_${now}_${Math.random().toString(36).substring(2, 7)}`,
-      name: name.trim(),
+      name: finalName,
       images: processedImages,
       categoryId: categoryId || categories[0]?.id || 'cat_misc',
       subcategory: subcategory.trim() || undefined,
@@ -326,10 +333,15 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       isFavorite: initialItem?.isFavorite || false,
       createdAt: initialItem?.createdAt || now,
       updatedAt: now,
+      isProcessingAI: isBackgroundScan,
     };
 
     haptic.success();
-    onSave(itemData);
+    const bgImage = isBackgroundScan 
+      ? (images.find((img) => img.startsWith('data:image/') && !img.startsWith('data:image/svg')) || images[0])
+      : undefined;
+      
+    onSave(itemData, bgImage);
   };
 
   return (
@@ -550,18 +562,18 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             </div>
           </div>
 
-          {/* 1. Item Name (Required) */}
+          {/* 1. Item Name (Required unless background scanning) */}
           <div>
             <label
               htmlFor="item-name-input"
               className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider block mb-1.5"
             >
-              Item Name <span className="text-zinc-900">*</span>
+              Item Name {!(images.length > 0 && Boolean(getOpenRouterApiKey()) && !isEditing) && <span className="text-zinc-900">*</span>}
             </label>
             <input
               id="item-name-input"
               type="text"
-              required
+              required={!(images.length > 0 && Boolean(getOpenRouterApiKey()) && !isEditing)}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Arduino Mega 2560 or LEGO Pilot..."
@@ -965,11 +977,20 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             <button
               id="save-item-submit-button"
               type="submit"
-              disabled={!name.trim()}
+              disabled={!name.trim() && !(images.length > 0 && Boolean(getOpenRouterApiKey()) && !isEditing)}
               className="w-full py-4 bg-black hover:bg-zinc-800 disabled:opacity-50 text-white font-extrabold text-sm rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all"
             >
-              <Check className="w-5 h-5 stroke-[2]" />
-              <span>{isEditing ? 'Save Changes' : 'Save to Vault'}</span>
+              {(!name.trim() && images.length > 0 && Boolean(getOpenRouterApiKey()) && !isEditing) ? (
+                <>
+                  <Sparkles className="w-5 h-5 stroke-[2] text-violet-400" />
+                  <span>Save &amp; Auto-Fill in Background</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-5 h-5 stroke-[2]" />
+                  <span>{isEditing ? 'Save Changes' : 'Save to Vault'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

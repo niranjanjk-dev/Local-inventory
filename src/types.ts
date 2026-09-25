@@ -19,6 +19,7 @@ export interface VaultItem {
   createdAt: number;
   updatedAt: number;
   lastUsedAt?: number;
+  isProcessingAI?: boolean;
 }
 
 export interface Category {
