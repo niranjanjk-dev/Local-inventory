@@ -149,14 +149,24 @@ Analyze the image and return this JSON structure:
   const content = data?.choices?.[0]?.message?.content;
   if (!content) throw new Error('Empty response from AI');
 
-  // Strip markdown code fences if model includes them anyway
-  const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  // Some models might include conversational text or safety warnings before/after the JSON
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  
+  if (!jsonMatch) {
+    // If there's no JSON, the model likely blocked it or returned a pure text response
+    if (content.toLowerCase().includes('safety')) {
+      throw new Error(`AI blocked the request for safety reasons. Please try another photo or a different model.`);
+    }
+    throw new Error(`AI didn't return a valid format. Raw output: ${content.substring(0, 100)}...`);
+  }
+
+  const jsonString = jsonMatch[0];
 
   let parsed: AIScanResult;
   try {
-    parsed = JSON.parse(cleanedContent);
+    parsed = JSON.parse(jsonString);
   } catch {
-    throw new Error(`Failed to parse AI response as JSON: ${cleanedContent}`);
+    throw new Error(`Failed to parse AI response. Try a different model. Raw: ${content.substring(0, 50)}...`);
   }
 
   // Validate and sanitise
