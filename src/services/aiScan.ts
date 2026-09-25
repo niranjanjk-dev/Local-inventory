@@ -116,8 +116,33 @@ Analyze the image and return this JSON structure:
   });
 
   if (!response.ok) {
-    const errBody = await response.text();
-    throw new Error(`OpenRouter API error ${response.status}: ${errBody}`);
+    let friendlyMessage: string;
+    try {
+      const errJson = await response.json();
+      const raw: string = errJson?.error?.metadata?.raw || '';
+      const code = response.status;
+
+      if (code === 429) {
+        friendlyMessage =
+          '⏱ This free model is temporarily rate-limited (too many users). ' +
+          'Please wait a moment and try again, or switch to a different model in Settings → AI Scan.';
+      } else if (code === 401 || code === 403) {
+        friendlyMessage =
+          '🔑 Invalid or expired API key. Please check your OpenRouter key in Settings → AI Scan.';
+      } else if (code === 402) {
+        friendlyMessage =
+          '💳 Insufficient credits on your OpenRouter account. Top up at openrouter.ai or pick a Free model.';
+      } else if (raw.toLowerCase().includes('does not support')) {
+        friendlyMessage =
+          '📷 This model does not support image input. Please choose a vision-capable model in Settings → AI Scan.';
+      } else {
+        friendlyMessage =
+          `AI scan failed (${code}). ${errJson?.error?.message || 'Please try a different model.'}`;
+      }
+    } catch {
+      friendlyMessage = `AI scan failed (${response.status}). Please try again or switch models.`;
+    }
+    throw new Error(friendlyMessage);
   }
 
   const data = await response.json();
