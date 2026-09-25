@@ -5,6 +5,8 @@ import { AddCategoryModal } from './AddCategoryModal';
 import { SAMPLE_IMAGES } from '../data/sampleData';
 import { savePhotoToFileSystem } from '../utils/fileSystem';
 import { haptic } from '../utils/haptics';
+import { scanItemWithAI } from '../services/aiScan';
+import { getOpenRouterApiKey } from '../utils/apiKey';
 import {
   Camera,
   Upload,
@@ -16,6 +18,10 @@ import {
   Image as ImageIcon,
   Check,
   MapPin,
+  Sparkles,
+  Loader2,
+  KeyRound,
+  AlertCircle,
 } from 'lucide-react';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 
@@ -90,6 +96,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // AI Scan State
+  const [aiScanLoading, setAiScanLoading] = useState(false);
+  const [aiScanError, setAiScanError] = useState<string | null>(null);
+  const [aiScanSuccess, setAiScanSuccess] = useState(false);
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [pendingCategoriesToCreate, setPendingCategoriesToCreate] = useState<Category[]>([]);
+
   useEffect(() => {
     if (!isEditing && images.length === 0) {
       setImages([SAMPLE_IMAGES.arduino]);
@@ -136,6 +150,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   };
 
   const removeImage = (index: number) => {
+    haptic.light();
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -151,6 +166,123 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     haptic.light();
     setTags(tags.filter((t) => t !== tagToRemove));
   };
+
+  // ─── AI SCAN ───────────────────────────────────────────────────────────────
+  const handleAiScan = async () => {
+    setAiScanError(null);
+    setAiScanSuccess(false);
+
+    const apiKey = getOpenRouterApiKey();
+    if (!apiKey) {
+      setShowApiKeyPrompt(true);
+      return;
+    }
+
+    // Pick the first real (non-SVG) image, or the first image overall
+    const imageToScan =
+      images.find((img) => img.startsWith('data:image/') && !img.startsWith('data:image/svg')) ||
+      images[0];
+
+    if (!imageToScan) {
+      setAiScanError('Please add a photo first, then tap AI Scan!');
+      return;
+    }
+
+    setAiScanLoading(true);
+    haptic.medium();
+
+    try {
+      const result = await scanItemWithAI(imageToScan, categories, apiKey);
+
+      // ── Apply fields ──
+      setName(result.name);
+      if (result.brand) setBrand(result.brand);
+      if (result.modelNumber) setModelNumber(result.modelNumber);
+      if (result.condition) setCondition(result.condition);
+      if (result.tags && result.tags.length > 0) setTags(result.tags);
+      if (result.notes) setNotes(result.notes);
+      if (result.quantity) setQuantity(result.quantity);
+      setShowMoreDetails(true);
+
+      // ── Category matching / creation ──
+      const normalise = (s: string) => s.toLowerCase().trim();
+      const existingTopCat = topLevelCategories.find(
+        (c) => normalise(c.name) === normalise(result.categoryName)
+      );
+
+      let resolvedCategoryId = categoryId;
+
+      if (existingTopCat) {
+        resolvedCategoryId = existingTopCat.id;
+        setCategoryId(existingTopCat.id);
+      } else if (result.isNewCategory) {
+        // Create new top-level category inline
+        const newCat: Category = {
+          id: `cat_ai_${Date.now()}`,
+          name: result.categoryName,
+          icon: result.categoryIcon || 'Package',
+          color: 'pattern-solid-zinc-600',
+          isCustom: true,
+          description: `AI-created category for ${result.categoryName}`,
+        };
+        if (onAddCategory) onAddCategory(newCat);
+        resolvedCategoryId = newCat.id;
+        setCategoryId(newCat.id);
+        setPendingCategoriesToCreate((prev) => [...prev, newCat]);
+      }
+
+      // ── Sub-collection matching / creation ──
+      if (result.subcategoryName) {
+        const existingSub = categories.find(
+          (c) =>
+            c.parentId === resolvedCategoryId &&
+            normalise(c.name) === normalise(result.subcategoryName!)
+        );
+
+        if (existingSub) {
+          setSubcategory(existingSub.name);
+        } else if (result.isNewSubcategory && result.subcategoryName) {
+          // Create new subcategory inline
+          const parentCat = topLevelCategories.find((c) => c.id === resolvedCategoryId) ||
+            categories.find((c) => c.id === resolvedCategoryId);
+          const newSub: Category = {
+            id: `cat_ai_sub_${Date.now()}`,
+            name: result.subcategoryName,
+            parentId: resolvedCategoryId,
+            icon: parentCat?.icon || 'Package',
+            color: parentCat?.color || 'pattern-solid-zinc-400',
+            isCustom: true,
+          };
+          if (onAddCategory) onAddCategory(newSub);
+          setSubcategory(result.subcategoryName);
+          setPendingCategoriesToCreate((prev) => [...prev, newSub]);
+        } else if (result.subcategoryName) {
+          setSubcategory(result.subcategoryName);
+        }
+      }
+
+      setAiScanSuccess(true);
+      haptic.success();
+      setTimeout(() => setAiScanSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('AI scan error:', err);
+      setAiScanError(err.message || 'AI scan failed. Please try again.');
+      haptic.light();
+    } finally {
+      setAiScanLoading(false);
+    }
+  };
+
+  const handleSaveApiKey = () => {
+    if (apiKeyInput.trim()) {
+      saveOpenRouterApiKey(apiKeyInput.trim());
+      setShowApiKeyPrompt(false);
+      setApiKeyInput('');
+      // Auto-trigger scan
+      setTimeout(() => handleAiScan(), 100);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,8 +411,6 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               className="hidden"
             />
 
-            {/* Removed HTML5 Camera Viewfinder */}
-
             {cameraError && (
               <p className="text-xs text-black font-semibold mb-2">{cameraError}</p>
             )}
@@ -331,6 +461,93 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 <span className="text-[11px] text-zinc-400 mt-0.5">Stored 100% locally on your device</span>
               </div>
             )}
+
+            {/* ✨ AI Scan Button */}
+            <div className="mt-3">
+              {!showApiKeyPrompt ? (
+                <button
+                  type="button"
+                  onClick={handleAiScan}
+                  disabled={aiScanLoading || images.length === 0}
+                  className={`w-full py-3 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all active:scale-98
+                    ${aiScanSuccess
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white disabled:opacity-40 disabled:cursor-not-allowed'
+                    }`}
+                >
+                  {aiScanLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Analysing photo...</span>
+                    </>
+                  ) : aiScanSuccess ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Fields filled by AI ✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>✨ AI Scan &amp; Fill Fields</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                /* API Key entry inline panel */
+                <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <p className="text-xs font-extrabold text-indigo-900">Enter your OpenRouter API Key</p>
+                  </div>
+                  <p className="text-[11px] text-indigo-700 leading-relaxed">
+                    Get a free key at{' '}
+                    <span className="font-bold underline">openrouter.ai/keys</span>. 
+                    It is saved locally on this device only.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
+                      placeholder="sk-or-..."
+                      className="flex-1 bg-white border border-indigo-300 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-indigo-500"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveApiKey}
+                      disabled={!apiKeyInput.trim()}
+                      className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl disabled:opacity-50"
+                    >
+                      Save &amp; Scan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeyPrompt(false)}
+                      className="px-3 py-2 bg-zinc-100 text-zinc-700 font-bold text-xs rounded-xl"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* AI Error */}
+              {aiScanError && (
+                <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-red-700 font-semibold">{aiScanError}</p>
+                </div>
+              )}
+
+              {/* Hint when no photo yet */}
+              {images.length === 0 && !showApiKeyPrompt && (
+                <p className="text-center text-[11px] text-zinc-400 mt-1.5 font-medium">
+                  Add a photo first to enable AI scanning
+                </p>
+              )}
+            </div>
           </div>
 
           {/* 1. Item Name (Required) */}
@@ -473,6 +690,19 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     </button>
                   );
                 })}
+
+                {/* Show AI-suggested subcategory as a pill if not in list yet */}
+                {subcategory &&
+                  !currentSubcategories.some((s) => s.name === subcategory) && (
+                    <button
+                      type="button"
+                      onClick={() => setSubcategory(subcategory)}
+                      className="px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-violet-600 text-white"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>{subcategory}</span>
+                    </button>
+                  )}
               </div>
             </div>
           </div>

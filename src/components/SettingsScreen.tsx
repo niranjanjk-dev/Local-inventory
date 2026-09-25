@@ -6,6 +6,7 @@ import { AddCategoryModal } from './AddCategoryModal';
 import { haptic } from '../utils/haptics';
 import { ThemeConfig } from '../utils/theme';
 import { usePWAInstall } from '../utils/usePWAInstall';
+import { getOpenRouterApiKey, saveOpenRouterApiKey, clearOpenRouterApiKey } from '../utils/apiKey';
 import {
   Download,
   Upload,
@@ -21,6 +22,10 @@ import {
   ExternalLink,
   Copy,
   Sparkles,
+  KeyRound,
+  Eye,
+  EyeOff,
+  AlertCircle,
 } from 'lucide-react';
 
 interface SettingsScreenProps {
@@ -56,6 +61,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
+  // AI Key state
+  const [aiKeyInput, setAiKeyInput] = useState('');
+  const [showAiKeyValue, setShowAiKeyValue] = useState(false);
+  const [aiKeySaved, setAiKeySaved] = useState(false);
+  const hasAiKey = Boolean(getOpenRouterApiKey());
+
   const pwa = usePWAInstall();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -79,9 +90,92 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Title */}
       <div>
         <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Vault Settings</h1>
-        <p className="text-xs text-zinc-500 font-medium">Statistics, appearance & local data management</p>
+        <p className="text-xs text-zinc-500 font-medium">Statistics, appearance &amp; local data management</p>
       </div>
 
+
+      {/* ✨ AI Scan Settings */}
+      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-3xl p-5 border border-violet-200 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold text-violet-900">AI Scan Settings</h3>
+            <p className="text-[11px] text-violet-600 font-medium">Auto-fill item fields from photos using AI</p>
+          </div>
+        </div>
+
+        {hasAiKey ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 border border-violet-200">
+              <KeyRound className="w-4 h-4 text-violet-500 shrink-0" />
+              <span className="text-xs font-bold text-violet-800 flex-1">API Key Saved ✓</span>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic.light();
+                  clearOpenRouterApiKey();
+                  setAiKeyInput('');
+                  setAiKeySaved(false);
+                }}
+                className="text-[11px] font-bold text-red-500 hover:text-red-700"
+              >
+                Remove
+              </button>
+            </div>
+            <p className="text-[11px] text-violet-600 font-medium px-1">
+              ✨ AI Scan is active. Tap the <strong>✨ AI Scan</strong> button when adding items.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400" />
+                <input
+                  type={showAiKeyValue ? 'text' : 'password'}
+                  value={aiKeyInput}
+                  onChange={(e) => setAiKeyInput(e.target.value)}
+                  placeholder="sk-or-..."
+                  className="w-full bg-white border border-violet-200 rounded-xl pl-9 pr-10 py-2.5 text-xs font-semibold outline-none focus:border-violet-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAiKeyValue(!showAiKeyValue)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-400"
+                >
+                  {showAiKeyValue ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <button
+                type="button"
+                disabled={!aiKeyInput.trim()}
+                onClick={() => {
+                  haptic.success();
+                  saveOpenRouterApiKey(aiKeyInput.trim());
+                  setAiKeySaved(true);
+                  setAiKeyInput('');
+                  setTimeout(() => setAiKeySaved(false), 2000);
+                }}
+                className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all ${
+                  aiKeySaved
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-40'
+                }`}
+              >
+                {aiKeySaved ? '✓ Saved' : 'Save'}
+              </button>
+            </div>
+            <p className="text-[11px] text-violet-600 font-medium px-1">
+              Get a free key at{' '}
+              <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="underline font-bold">
+                openrouter.ai/keys
+              </a>. Stored locally on your device only.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Basic Collection Statistics Card */}
       <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
