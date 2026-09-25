@@ -147,7 +147,15 @@ Analyze the image and return this JSON structure:
 
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty response from AI');
+  
+  if (!content) {
+    console.error('Empty AI response payload:', data);
+    const apiError = data?.error?.message || (data?.error && JSON.stringify(data.error));
+    if (apiError) {
+      throw new Error(`API Error: ${apiError}`);
+    }
+    throw new Error('AI returned an empty response. The model may have rejected the image. Please try a different model.');
+  }
 
   // Some models might include conversational text or safety warnings before/after the JSON
   const jsonMatch = content.match(/\{[\s\S]*\}/);
