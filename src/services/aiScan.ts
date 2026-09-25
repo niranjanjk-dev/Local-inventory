@@ -111,7 +111,7 @@ Analyze the image and return this JSON structure:
         },
       ],
       max_tokens: 512,
-      temperature: 0.0,
+      temperature: 0.2,
     }),
   });
 
