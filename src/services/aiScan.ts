@@ -1,4 +1,5 @@
 import { Category } from '../types';
+import { getSelectedModelId } from '../utils/apiKey';
 
 export interface AIScanResult {
   name: string;
@@ -91,7 +92,7 @@ Analyze the image and return this JSON structure:
       'X-Title': 'Local Inventory',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001',
+      model: getSelectedModelId(),
       messages: [
         {
           role: 'user',

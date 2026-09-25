@@ -6,7 +6,15 @@ import { AddCategoryModal } from './AddCategoryModal';
 import { haptic } from '../utils/haptics';
 import { ThemeConfig } from '../utils/theme';
 import { usePWAInstall } from '../utils/usePWAInstall';
-import { getOpenRouterApiKey, saveOpenRouterApiKey, clearOpenRouterApiKey } from '../utils/apiKey';
+import {
+  getOpenRouterApiKey,
+  saveOpenRouterApiKey,
+  clearOpenRouterApiKey,
+  getSelectedModelId,
+  saveSelectedModelId,
+  VISION_MODELS,
+  DEFAULT_MODEL_ID,
+} from '../utils/apiKey';
 import {
   Download,
   Upload,
@@ -61,11 +69,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  // AI Key state
+  // AI Key & Model state
   const [aiKeyInput, setAiKeyInput] = useState('');
   const [showAiKeyValue, setShowAiKeyValue] = useState(false);
   const [aiKeySaved, setAiKeySaved] = useState(false);
-  const hasAiKey = Boolean(getOpenRouterApiKey());
+  const [selectedModelId, setSelectedModelId] = useState(getSelectedModelId());
+  const [hasAiKey, setHasAiKey] = useState(Boolean(getOpenRouterApiKey()));
 
   const pwa = usePWAInstall();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -95,86 +104,136 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
 
       {/* ✨ AI Scan Settings */}
-      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-3xl p-5 border border-violet-200 space-y-3">
-        <div className="flex items-center gap-2 mb-1">
+      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-3xl p-5 border border-violet-200 space-y-4">
+        <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-violet-900">AI Scan Settings</h3>
-            <p className="text-[11px] text-violet-600 font-medium">Auto-fill item fields from photos using AI</p>
+            <p className="text-[11px] text-violet-600 font-medium">Auto-fill item details from photos using AI</p>
           </div>
         </div>
 
-        {hasAiKey ? (
-          <div className="space-y-2">
+        {/* API Key */}
+        <div className="space-y-2">
+          <p className="text-[11px] font-extrabold text-violet-800 uppercase tracking-wider">OpenRouter API Key</p>
+          {hasAiKey ? (
             <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-3 border border-violet-200">
-              <KeyRound className="w-4 h-4 text-violet-500 shrink-0" />
-              <span className="text-xs font-bold text-violet-800 flex-1">API Key Saved ✓</span>
+              <KeyRound className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="text-xs font-bold text-emerald-700 flex-1">API Key Active ✓</span>
               <button
                 type="button"
                 onClick={() => {
                   haptic.light();
                   clearOpenRouterApiKey();
+                  setHasAiKey(false);
                   setAiKeyInput('');
-                  setAiKeySaved(false);
                 }}
                 className="text-[11px] font-bold text-red-500 hover:text-red-700"
               >
                 Remove
               </button>
             </div>
-            <p className="text-[11px] text-violet-600 font-medium px-1">
-              ✨ AI Scan is active. Tap the <strong>✨ AI Scan</strong> button when adding items.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400" />
-                <input
-                  type={showAiKeyValue ? 'text' : 'password'}
-                  value={aiKeyInput}
-                  onChange={(e) => setAiKeyInput(e.target.value)}
-                  placeholder="sk-or-..."
-                  className="w-full bg-white border border-violet-200 rounded-xl pl-9 pr-10 py-2.5 text-xs font-semibold outline-none focus:border-violet-500"
-                />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400" />
+                  <input
+                    type={showAiKeyValue ? 'text' : 'password'}
+                    value={aiKeyInput}
+                    onChange={(e) => setAiKeyInput(e.target.value)}
+                    placeholder="sk-or-..."
+                    className="w-full bg-white border border-violet-200 rounded-xl pl-9 pr-10 py-2.5 text-xs font-semibold outline-none focus:border-violet-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAiKeyValue(!showAiKeyValue)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-400"
+                  >
+                    {showAiKeyValue ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setShowAiKeyValue(!showAiKeyValue)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-violet-400"
+                  disabled={!aiKeyInput.trim()}
+                  onClick={() => {
+                    haptic.success();
+                    saveOpenRouterApiKey(aiKeyInput.trim());
+                    setHasAiKey(true);
+                    setAiKeyInput('');
+                  }}
+                  className="px-4 py-2.5 rounded-xl font-extrabold text-xs bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-40 transition-all"
                 >
-                  {showAiKeyValue ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Save
                 </button>
               </div>
-              <button
-                type="button"
-                disabled={!aiKeyInput.trim()}
-                onClick={() => {
-                  haptic.success();
-                  saveOpenRouterApiKey(aiKeyInput.trim());
-                  setAiKeySaved(true);
-                  setAiKeyInput('');
-                  setTimeout(() => setAiKeySaved(false), 2000);
-                }}
-                className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all ${
-                  aiKeySaved
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-40'
-                }`}
-              >
-                {aiKeySaved ? '✓ Saved' : 'Save'}
-              </button>
+              <p className="text-[11px] text-violet-600 font-medium">
+                Get a free key at{' '}
+                <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="underline font-bold">
+                  openrouter.ai/keys
+                </a>. Stored locally on your device.
+              </p>
             </div>
-            <p className="text-[11px] text-violet-600 font-medium px-1">
-              Get a free key at{' '}
-              <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="underline font-bold">
-                openrouter.ai/keys
-              </a>. Stored locally on your device only.
-            </p>
+          )}
+        </div>
+
+        {/* Model Selector */}
+        <div className="space-y-2">
+          <p className="text-[11px] font-extrabold text-violet-800 uppercase tracking-wider">Vision Model</p>
+          <div className="space-y-1.5">
+            {VISION_MODELS.map((model) => {
+              const isSelected = selectedModelId === model.id;
+              const badgeColors: Record<string, string> = {
+                Free: 'bg-emerald-100 text-emerald-700',
+                Fast: 'bg-sky-100 text-sky-700',
+                Best: 'bg-violet-100 text-violet-700',
+                Smart: 'bg-amber-100 text-amber-700',
+              };
+              return (
+                <button
+                  key={model.id}
+                  type="button"
+                  onClick={() => {
+                    haptic.selection();
+                    setSelectedModelId(model.id);
+                    saveSelectedModelId(model.id);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition-all ${
+                    isSelected
+                      ? 'bg-violet-600 border-violet-600 text-white'
+                      : 'bg-white border-violet-100 hover:border-violet-300'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-extrabold truncate ${isSelected ? 'text-white' : 'text-zinc-900'}`}>
+                        {model.name}
+                      </span>
+                      {model.badge && (
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wide shrink-0 ${
+                          isSelected ? 'bg-white/20 text-white' : badgeColors[model.badge] || ''
+                        }`}>
+                          {model.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-[10px] font-medium truncate mt-0.5 ${isSelected ? 'text-violet-200' : 'text-zinc-400'}`}>
+                      {model.provider} · {model.description}
+                    </p>
+                  </div>
+                  {isSelected && (
+                    <Check className="w-4 h-4 text-white shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        )}
+          <p className="text-[11px] text-violet-500 font-medium px-1">
+            All models listed support vision (image) input.
+          </p>
+        </div>
       </div>
 
       {/* Basic Collection Statistics Card */}

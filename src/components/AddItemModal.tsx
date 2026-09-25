@@ -6,7 +6,7 @@ import { SAMPLE_IMAGES } from '../data/sampleData';
 import { savePhotoToFileSystem } from '../utils/fileSystem';
 import { haptic } from '../utils/haptics';
 import { scanItemWithAI } from '../services/aiScan';
-import { getOpenRouterApiKey } from '../utils/apiKey';
+import { getOpenRouterApiKey, saveOpenRouterApiKey } from '../utils/apiKey';
 import {
   Camera,
   Upload,
