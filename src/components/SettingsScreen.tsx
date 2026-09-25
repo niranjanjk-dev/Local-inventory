@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { VaultItem, Category, StorageLocation } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { VaultyMascot } from './CuteIllustrations';
@@ -12,8 +12,9 @@ import {
   clearOpenRouterApiKey,
   getSelectedModelId,
   saveSelectedModelId,
-  VISION_MODELS,
+  fetchVisionModels,
   DEFAULT_MODEL_ID,
+  type AIModel,
 } from '../utils/apiKey';
 import {
   Download,
@@ -34,6 +35,9 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  RefreshCw,
+  Search,
+  Gift,
 } from 'lucide-react';
 
 interface SettingsScreenProps {
@@ -72,9 +76,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   // AI Key & Model state
   const [aiKeyInput, setAiKeyInput] = useState('');
   const [showAiKeyValue, setShowAiKeyValue] = useState(false);
-  const [aiKeySaved, setAiKeySaved] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(getSelectedModelId());
   const [hasAiKey, setHasAiKey] = useState(Boolean(getOpenRouterApiKey()));
+
+  // Live model list
+  const [visionModels, setVisionModels] = useState<AIModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [modelSearch, setModelSearch] = useState('');
+  const [showFreeOnly, setShowFreeOnly] = useState(false);
+
+  const loadModels = async () => {
+    const key = getOpenRouterApiKey();
+    if (!key) return;
+    setModelsLoading(true);
+    setModelsError(null);
+    try {
+      const models = await fetchVisionModels(key);
+      setVisionModels(models);
+      if (models.length > 0 && !models.find((m) => m.id === getSelectedModelId())) {
+        setSelectedModelId(models[0].id);
+        saveSelectedModelId(models[0].id);
+      }
+    } catch (err: any) {
+      setModelsError(err.message || 'Failed to load models');
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (hasAiKey && visionModels.length === 0) loadModels();
+  }, [hasAiKey]);
+
+  const filteredModels = visionModels.filter((m) => {
+    const q = modelSearch.toLowerCase();
+    const matchSearch = !q || m.name.toLowerCase().includes(q) || m.provider.toLowerCase().includes(q) || m.id.toLowerCase().includes(q);
+    return matchSearch && (!showFreeOnly || m.isFree);
+  });
 
   const pwa = usePWAInstall();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -179,61 +218,123 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           )}
         </div>
 
-        {/* Model Selector */}
-        <div className="space-y-2">
-          <p className="text-[11px] font-extrabold text-violet-800 uppercase tracking-wider">Vision Model</p>
-          <div className="space-y-1.5">
-            {VISION_MODELS.map((model) => {
-              const isSelected = selectedModelId === model.id;
-              const badgeColors: Record<string, string> = {
-                Free: 'bg-emerald-100 text-emerald-700',
-                Fast: 'bg-sky-100 text-sky-700',
-                Best: 'bg-violet-100 text-violet-700',
-                Smart: 'bg-amber-100 text-amber-700',
-              };
-              return (
-                <button
-                  key={model.id}
-                  type="button"
-                  onClick={() => {
-                    haptic.selection();
-                    setSelectedModelId(model.id);
-                    saveSelectedModelId(model.id);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition-all ${
-                    isSelected
-                      ? 'bg-violet-600 border-violet-600 text-white'
-                      : 'bg-white border-violet-100 hover:border-violet-300'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-extrabold truncate ${isSelected ? 'text-white' : 'text-zinc-900'}`}>
-                        {model.name}
-                      </span>
-                      {model.badge && (
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wide shrink-0 ${
-                          isSelected ? 'bg-white/20 text-white' : badgeColors[model.badge] || ''
-                        }`}>
-                          {model.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-[10px] font-medium truncate mt-0.5 ${isSelected ? 'text-violet-200' : 'text-zinc-400'}`}>
-                      {model.provider} · {model.description}
-                    </p>
+        {/* Live Model Selector — only shown when key is active */}
+        {hasAiKey && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-extrabold text-violet-800 uppercase tracking-wider">Vision Model</p>
+              <button
+                type="button"
+                onClick={() => { haptic.light(); loadModels(); }}
+                disabled={modelsLoading}
+                className="flex items-center gap-1 text-[11px] font-bold text-violet-600 hover:text-violet-800 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
+                {modelsLoading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+
+            {modelsError && (
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-red-700 font-semibold">{modelsError}</p>
+              </div>
+            )}
+
+            {modelsLoading && visionModels.length === 0 && (
+              <div className="flex items-center justify-center py-6 gap-2 text-violet-500">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span className="text-xs font-bold">Fetching models from OpenRouter...</span>
+              </div>
+            )}
+
+            {visionModels.length > 0 && (
+              <>
+                {/* Search + Free filter */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-violet-400" />
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(e) => setModelSearch(e.target.value)}
+                      placeholder="Search models..."
+                      className="w-full bg-white border border-violet-200 rounded-xl pl-8 pr-3 py-2 text-xs font-semibold outline-none focus:border-violet-500"
+                    />
                   </div>
-                  {isSelected && (
-                    <Check className="w-4 h-4 text-white shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => { haptic.selection(); setShowFreeOnly(!showFreeOnly); }}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                      showFreeOnly
+                        ? 'bg-emerald-500 text-white border-emerald-500'
+                        : 'bg-white text-zinc-600 border-violet-200 hover:border-violet-400'
+                    }`}
+                  >
+                    <Gift className="w-3.5 h-3.5" />
+                    Free
+                  </button>
+                </div>
+
+                {/* Model list */}
+                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                  {filteredModels.length === 0 ? (
+                    <p className="text-center text-[11px] text-violet-400 font-medium py-4">No models match your search</p>
+                  ) : (
+                    filteredModels.map((model) => {
+                      const isSelected = selectedModelId === model.id;
+                      return (
+                        <button
+                          key={model.id}
+                          type="button"
+                          onClick={() => {
+                            haptic.selection();
+                            setSelectedModelId(model.id);
+                            saveSelectedModelId(model.id);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition-all ${
+                            isSelected
+                              ? 'bg-violet-600 border-violet-600'
+                              : 'bg-white border-violet-100 hover:border-violet-300'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-xs font-extrabold truncate max-w-[180px] ${isSelected ? 'text-white' : 'text-zinc-900'}`}>
+                                {model.name}
+                              </span>
+                              {model.isFree && (
+                                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wide shrink-0 ${
+                                  isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
+                                }`}>Free</span>
+                              )}
+                            </div>
+                            <p className={`text-[10px] font-medium truncate mt-0.5 ${isSelected ? 'text-violet-200' : 'text-zinc-400'}`}>
+                              {model.provider}
+                              {!model.isFree && model.pricePrompt !== undefined && model.pricePrompt > 0 && (
+                                <span> · ${model.pricePrompt.toFixed(2)}/M tokens</span>
+                              )}
+                            </p>
+                          </div>
+                          {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                        </button>
+                      );
+                    })
                   )}
-                </button>
-              );
-            })}
+                </div>
+                <p className="text-[11px] text-violet-400 font-medium">
+                  {filteredModels.length} of {visionModels.length} vision-capable models · Live from OpenRouter
+                </p>
+              </>
+            )}
+
+            {!modelsLoading && visionModels.length === 0 && !modelsError && (
+              <p className="text-[11px] text-violet-500 text-center font-medium py-2">
+                Tap Refresh to load available models from OpenRouter
+              </p>
+            )}
           </div>
-          <p className="text-[11px] text-violet-500 font-medium px-1">
-            All models listed support vision (image) input.
-          </p>
-        </div>
+        )}
       </div>
 
       {/* Basic Collection Statistics Card */}
