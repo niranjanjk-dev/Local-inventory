@@ -69,7 +69,7 @@ export const CollectionScreen: React.FC<CollectionScreenProps> = ({
   );
 
   const currentSubcategories = useMemo(
-    () => (activeCategory !== 'all' ? categories.filter((c) => c.parentId === activeCategory) : []),
+    () => (activeCategory !== 'all' ? categories.filter((c) => c.parentId === activeCategory).sort((a, b) => a.name.localeCompare(b.name)) : []),
     [categories, activeCategory]
   );
 
@@ -143,6 +143,7 @@ export const CollectionScreen: React.FC<CollectionScreenProps> = ({
     items,
     searchQuery,
     activeCategory,
+    selectedSubcategory,
     filterLowStockOnly,
     filterLocationId,
     filterCondition,

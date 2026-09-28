@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StorageLocation, VaultItem, Category } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { haptic } from '../utils/haptics';
+import { getPhotoUrl } from '../utils/fileSystem';
 import {
   MapPin,
   Plus,
@@ -21,6 +22,7 @@ interface LocationsScreenProps {
   items: VaultItem[];
   categories: Category[];
   onAddLocation: (name: string, parentId?: string, description?: string) => void;
+  onEditLocation: (id: string, name: string, parentId?: string, description?: string) => void;
   onDeleteLocation: (id: string) => void;
   onSelectItem: (item: VaultItem) => void;
   onNavigateToCollection: (locationId: string) => void;
@@ -31,12 +33,14 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
   items,
   categories,
   onAddLocation,
+  onEditLocation,
   onDeleteLocation,
   onSelectItem,
   onNavigateToCollection,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingLoc, setEditingLoc] = useState<StorageLocation | null>(null);
   const [newLocName, setNewLocName] = useState('');
   const [newLocParentId, setNewLocParentId] = useState('');
   const [newLocDescription, setNewLocDescription] = useState('');
@@ -52,16 +56,26 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
     if (!newLocName.trim()) return;
 
     haptic.success();
-    onAddLocation(
-      newLocName.trim(),
-      newLocParentId || undefined,
-      newLocDescription.trim() || undefined
-    );
+    if (editingLoc) {
+      onEditLocation(
+        editingLoc.id,
+        newLocName.trim(),
+        newLocParentId || undefined,
+        newLocDescription.trim() || undefined
+      );
+    } else {
+      onAddLocation(
+        newLocName.trim(),
+        newLocParentId || undefined,
+        newLocDescription.trim() || undefined
+      );
+    }
 
     setNewLocName('');
     setNewLocParentId('');
     setNewLocDescription('');
     setShowAddModal(false);
+    setEditingLoc(null);
   };
 
   const getItemsForLocation = (locationId: string) => {
@@ -81,6 +95,10 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
           type="button"
           onClick={() => {
             haptic.medium();
+            setEditingLoc(null);
+            setNewLocName('');
+            setNewLocParentId('');
+            setNewLocDescription('');
             setShowAddModal(true);
           }}
           className="px-3.5 py-2 bg-black hover:bg-zinc-800 active:scale-95 text-white font-bold text-xs rounded-2xl shadow-xs flex items-center gap-1.5 transition-all"
@@ -191,6 +209,22 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
+                        haptic.medium();
+                        setEditingLoc(loc);
+                        setNewLocName(loc.name);
+                        setNewLocParentId(loc.parentId || '');
+                        setNewLocDescription(loc.description || '');
+                        setShowAddModal(true);
+                      }}
+                      className="p-1.5 text-zinc-400 hover:text-black rounded-lg hover:bg-zinc-100 transition-colors"
+                      title="Edit Location"
+                    >
+                      <Layers className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         haptic.warning();
                         if (confirm(`Delete storage location "${loc.name}"?`)) {
                           onDeleteLocation(loc.id);
@@ -244,7 +278,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                             >
                               <div className="w-10 h-10 rounded-2xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
                                 <img
-                                  src={item.images[0] || ''}
+                                  src={getPhotoUrl(item.images[0]) || ''}
                                   alt={item.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -279,11 +313,16 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                 <div className="w-8 h-8 rounded-xl bg-zinc-100 text-black flex items-center justify-center">
                   <MapPin className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-extrabold text-zinc-900">Add Storage Location</h3>
+                <h3 className="text-base font-extrabold text-zinc-900">
+                  {editingLoc ? 'Edit Storage Location' : 'Add Storage Location'}
+                </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingLoc(null);
+                }}
                 className="w-7 h-7 rounded-full bg-zinc-100 text-zinc-500 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
@@ -315,11 +354,13 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                   className="w-full bg-zinc-100 focus:bg-white text-zinc-900 px-3 py-2.5 rounded-xl text-xs font-semibold outline-none border border-zinc-200 focus:border-zinc-900"
                 >
                   <option value="">None (Top Level e.g. Workshop, Bedroom)</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.path}
-                    </option>
-                  ))}
+                  {locations
+                    .filter((loc) => !editingLoc || (loc.id !== editingLoc.id && !loc.path.startsWith(editingLoc.path + ' →')))
+                    .map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.path}
+                      </option>
+                    ))}
                 </select>
                 <p className="text-[11px] text-zinc-400 mt-1">
                   Nest this location inside an existing room, shelf, or cabinet.
@@ -342,7 +383,10 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingLoc(null);
+                  }}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 bg-zinc-100"
                 >
                   Cancel
@@ -352,7 +396,7 @@ export const LocationsScreen: React.FC<LocationsScreenProps> = ({
                   disabled={!newLocName.trim()}
                   className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-black hover:bg-zinc-800 disabled:opacity-50 shadow-xs"
                 >
-                  Create Location
+                  {editingLoc ? 'Save Changes' : 'Create Location'}
                 </button>
               </div>
             </form>

@@ -296,6 +296,51 @@ export default function App() {
     }
   };
 
+  const handleEditLocation = async (id: string, name: string, parentId?: string, description?: string) => {
+    try {
+      const parentLoc = parentId ? locations.find((l) => l.id === parentId) : null;
+      const newPath = parentLoc ? `${parentLoc.path} → ${name}` : name;
+      
+      const locToEdit = locations.find((l) => l.id === id);
+      if (!locToEdit) return;
+
+      const oldPath = locToEdit.path;
+
+      const updatedLoc: StorageLocation = {
+        ...locToEdit,
+        name,
+        parentId: parentId || null,
+        path: newPath,
+        description: description || undefined,
+      };
+      await saveLocation(updatedLoc);
+
+      const itemsToUpdate = items.filter((i) => i.locationId === id);
+      for (const item of itemsToUpdate) {
+        await saveItem({ ...item, locationPath: newPath });
+      }
+
+      const prefix = oldPath + ' → ';
+      const newPrefix = newPath + ' → ';
+      const childLocations = locations.filter((l) => l.path.startsWith(prefix));
+      for (const child of childLocations) {
+        const childNewPath = child.path.replace(prefix, newPrefix);
+        await saveLocation({ ...child, path: childNewPath });
+        
+        const childItems = items.filter((i) => i.locationId === child.id);
+        for (const item of childItems) {
+          await saveItem({ ...item, locationPath: childNewPath });
+        }
+      }
+
+      await reloadData();
+      showToast(`Location updated!`);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update location', 'error');
+    }
+  };
+
   const handleDeleteLocation = async (locId: string) => {
     try {
       await deleteLocation(locId);
@@ -450,6 +495,7 @@ export default function App() {
               items={items}
               categories={categories}
               onAddLocation={handleAddLocation}
+              onEditLocation={handleEditLocation}
               onDeleteLocation={handleDeleteLocation}
               onSelectItem={handleSelectItem}
               onNavigateToCollection={handleNavigateToCollectionWithLocation}

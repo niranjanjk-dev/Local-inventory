@@ -368,66 +368,45 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
         {/* Category Breakdown Progress */}
         <div className="space-y-1.5 pt-2">
-          <span className="text-[11px] font-extrabold uppercase text-zinc-400 tracking-wider block mb-1">
+          <span className="text-[11px] font-extrabold uppercase text-zinc-400 tracking-wider block mb-2">
             Category Distribution
           </span>
-          <div className="h-10 w-full bg-zinc-100 border border-zinc-200 flex overflow-hidden rounded-xl">
-            {categories.map((cat) => {
-              const count = items.filter((i) => i.categoryId === cat.id).length;
-              if (count === 0 || totalItems === 0) return null;
-              const pct = (count / totalItems) * 100;
-              return (
-                <div
-                  key={cat.id}
-                  style={{ width: `${pct}%` }}
-                  className={`h-full ${cat.color}`}
-                  title={`${cat.name}: ${count} (${pct.toFixed(0)}%)`}
-                />
-              );
-            })}
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 text-[11px] font-semibold text-zinc-600">
-            {categories.slice(0, 5).map((cat) => {
-              const count = items.filter((i) => i.categoryId === cat.id).length;
-              if (count === 0) return null;
-              return (
-                <span key={cat.id} className="flex items-center gap-1.5">
-                  <span className={`w-4 h-4 rounded-md border border-zinc-200 ${cat.color}`} />
-                  {cat.name} ({count})
-                </span>
-              );
-            })}
+          <div className="max-h-48 overflow-y-auto pr-1 space-y-2 no-scrollbar">
+            {categories
+              .filter((c) => !c.parentId)
+              .map((cat) => {
+                const count = items.filter((i) => i.categoryId === cat.id).length;
+                return { cat, count };
+              })
+              .filter((x) => x.count > 0)
+              .sort((a, b) => b.count - a.count)
+              .map(({ cat, count }) => {
+                const pct = totalItems > 0 ? (count / totalItems) * 100 : 0;
+                return (
+                  <div key={cat.id} className="relative w-full h-8 bg-zinc-50 rounded-lg overflow-hidden border border-zinc-100 flex items-center">
+                    <div 
+                      className={`absolute left-0 top-0 bottom-0 ${cat.color} opacity-20`}
+                      style={{ width: `${pct}%` }}
+                    />
+                    <div className="relative z-10 flex items-center justify-between w-full px-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-sm ${cat.color}`} />
+                        <span className="text-xs font-bold text-zinc-800">{cat.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-zinc-900">{count}</span>
+                        <span className="text-[10px] font-bold text-zinc-400 w-8 text-right">{pct.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            {categories.filter(c => !c.parentId).every(c => items.filter(i => i.categoryId === c.id).length === 0) && (
+              <div className="text-[11px] text-zinc-400 font-medium py-2">No items to display distribution.</div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* UI Aesthetics */}
-      {theme && onUpdateTheme && (
-        <div className="bg-white rounded-3xl p-5 border border-zinc-200 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-zinc-900">Border Outlines</h3>
-              <p className="text-[11px] text-zinc-500">Show structural container borders</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                haptic.medium();
-                onUpdateTheme({ ...theme, hideBorders: !theme.hideBorders });
-              }}
-              className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                !theme.hideBorders ? 'bg-black' : 'bg-zinc-200'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${
-                  !theme.hideBorders ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Customizable Categories Section */}
       <div className="bg-white rounded-2xl p-5 border border-zinc-200 space-y-4">

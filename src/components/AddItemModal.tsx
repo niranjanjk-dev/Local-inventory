@@ -57,7 +57,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
   // Top level categories and current subcategories
   const topLevelCategories = categories.filter((c) => !c.parentId);
-  const currentSubcategories = categories.filter((c) => c.parentId === categoryId);
+  const currentSubcategories = categories.filter((c) => c.parentId === categoryId).sort((a, b) => a.name.localeCompare(b.name));
 
   // Expandable secondary fields
   const [showMoreDetails, setShowMoreDetails] = useState(

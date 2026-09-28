@@ -107,7 +107,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <h2 className="text-base font-extrabold text-zinc-900 tracking-tight">
               Categories
             </h2>
-            <span className="text-xs font-bold text-zinc-400">({categories.length})</span>
+            <span className="text-xs font-bold text-zinc-400">({categories.filter(c => !c.parentId).length})</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          {categories.map((cat, idx) => {
+          {categories.filter(c => !c.parentId).map((cat, idx) => {
             const count = items.filter((i) => i.categoryId === cat.id).length;
             // Alternate between dark and light cards to match the reference look
             const isDark = idx % 2 !== 0;
